@@ -18,6 +18,8 @@ export enum Type {
   DARK = 'Dark'
 }
 
+export type DamageClass = 'physical' | 'special' | 'status';
+
 export interface Move {
   id: string;
   name: string;
@@ -25,6 +27,10 @@ export interface Move {
   power: number;
   accuracy: number;
   pp: number;
+  damageClass: DamageClass;
+  ailment?: string;
+  ailmentChance?: number;
+  statChanges?: { stat: keyof Stats; change: number }[];
 }
 
 export interface Stats {
@@ -36,6 +42,8 @@ export interface Stats {
   speed: number;
 }
 
+export type StatusCondition = 'PAR' | 'BRN' | 'PSN' | 'SLP' | 'FRZ';
+
 export interface Pokemon {
   id: string;
   name: string;
@@ -44,6 +52,7 @@ export interface Pokemon {
   moves: Move[];
   ability: string;
   spriteUrl: string;
+  cryUrl?: string;
 }
 
 export interface BattlePokemon extends Pokemon {
@@ -51,6 +60,8 @@ export interface BattlePokemon extends Pokemon {
   maxHp: number;
   actualStats: Stats;
   level: number;
+  status: StatusCondition | null;
+  sleepTurns?: number;
 }
 
 export interface BattleLog {

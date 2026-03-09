@@ -69,7 +69,8 @@ export default function App() {
       actualStats,
       currentHp: actualStats.hp,
       maxHp: actualStats.hp,
-      level: 50
+      level: 50,
+      status: null
     };
 
     if (gameState === 'DRAFT') {
@@ -119,7 +120,8 @@ export default function App() {
         ...enemyData,
         actualStats,
         currentHp: maxHp,
-        maxHp: maxHp
+        maxHp: maxHp,
+        status: null
       });
       setGameState('BATTLE');
     } catch (error) {

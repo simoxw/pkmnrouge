@@ -13,12 +13,25 @@ interface BattleEngineProps {
 }
 
 export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemon: initialEnemy, party, onBattleEnd, onSwitch }: BattleEngineProps) {
-  const [player, setPlayer] = useState<BattlePokemon>({ ...initialPlayer });
-  const [enemy, setEnemy] = useState<BattlePokemon>({ ...initialEnemy });
+  const [player, setPlayer] = useState<BattlePokemon>({ ...initialPlayer, status: initialPlayer.status || null });
+  const [enemy, setEnemy] = useState<BattlePokemon>({ ...initialEnemy, status: initialEnemy.status || null });
   const [logs, setLogs] = useState<BattleLog[]>([]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemy.actualStats.speed);
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
+
+  const playCry = (url?: string) => {
+    if (!url) return;
+    const audio = new Audio(url);
+    audio.volume = 0.4;
+    audio.play().catch(e => console.log("Audio play failed", e));
+  };
+
+  useEffect(() => {
+    // Play cries at start
+    playCry(player.cryUrl);
+    setTimeout(() => playCry(enemy.cryUrl), 1000);
+  }, []);
 
   const addLog = (message: string, type: BattleLog['type'] = 'info') => {
     setLogs(prev => [{ id: Math.random().toString(), message, type }, ...prev].slice(0, 5));
@@ -34,17 +47,89 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
   const handleMove = (move: Move) => {
     if (!isPlayerTurn || isBattleOver) return;
 
-    const { damage, effectiveness } = calculateDamage(player, enemy, move);
+    // Check Status (Paralysis, Sleep, Freeze)
+    if (player.status === 'SLP') {
+      if (player.sleepTurns && player.sleepTurns > 0) {
+        addLog(`${player.name} sta dormendo profondamente...`, 'status');
+        setPlayer(prev => ({ ...prev, sleepTurns: (prev.sleepTurns || 1) - 1 }));
+        setIsPlayerTurn(false);
+        return;
+      } else {
+        addLog(`${player.name} si è svegliato!`, 'status');
+        setPlayer(prev => ({ ...prev, status: null }));
+      }
+    }
+
+    if (player.status === 'FRZ') {
+      if (Math.random() < 0.2) {
+        addLog(`${player.name} si è scongelato!`, 'status');
+        setPlayer(prev => ({ ...prev, status: null }));
+      } else {
+        addLog(`${player.name} è congelato!`, 'status');
+        setIsPlayerTurn(false);
+        return;
+      }
+    }
+
+    if (player.status === 'PAR' && Math.random() < 0.25) {
+      addLog(`${player.name} è paralizzato! Non riesce a muoversi!`, 'status');
+      setIsPlayerTurn(false);
+      return;
+    }
+
+    const { damage, effectiveness, isCritical, isMiss } = calculateDamage(player, enemy, move);
+    
+    if (isMiss) {
+      addLog(`L'attacco di ${player.name} è fallito!`, 'status');
+      setIsPlayerTurn(false);
+      return;
+    }
+
     const newEnemyHp = Math.max(0, enemy.currentHp - damage);
     
-    setEnemy(prev => ({ ...prev, currentHp: newEnemyHp }));
     addLog(`${player.name} usa ${move.name}!`, 'info');
+    if (isCritical) addLog('Brutto colpo!', 'damage');
     
     if (effectiveness > 1) addLog('È superefficace!', 'status');
     if (effectiveness < 1 && effectiveness > 0) addLog('Non è molto efficace...', 'status');
     if (effectiveness === 0) addLog('Non ha effetto...', 'status');
     
-    addLog(`Danno inflitto: ${damage}`, 'damage');
+    if (damage > 0) addLog(`Danno inflitto: ${damage}`, 'damage');
+
+    // Handle Ailments
+    let newEnemyStatus = enemy.status;
+    if (move.ailment && !enemy.status && Math.random() * 100 < (move.ailmentChance || 100)) {
+      const ailmentMap: Record<string, any> = {
+        'paralysis': 'PAR',
+        'burn': 'BRN',
+        'poison': 'PSN',
+        'sleep': 'SLP',
+        'freeze': 'FRZ'
+      };
+      newEnemyStatus = ailmentMap[move.ailment] || null;
+      if (newEnemyStatus) {
+        addLog(`${enemy.name} è rimasto ${move.ailment}!`, 'status');
+      }
+    }
+
+    // Handle Stat Changes
+    let newEnemyStats = { ...enemy.actualStats };
+    if (move.statChanges) {
+      move.statChanges.forEach(sc => {
+        const currentVal = newEnemyStats[sc.stat];
+        const multiplier = sc.change > 0 ? 1.5 : 0.66;
+        newEnemyStats[sc.stat] = Math.floor(currentVal * multiplier);
+        addLog(`La ${sc.stat} di ${enemy.name} è ${sc.change > 0 ? 'aumentata' : 'diminuita'}!`, 'status');
+      });
+    }
+    
+    setEnemy(prev => ({ 
+      ...prev, 
+      currentHp: newEnemyHp, 
+      status: newEnemyStatus,
+      actualStats: newEnemyStats,
+      sleepTurns: newEnemyStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
+    }));
 
     if (newEnemyHp === 0) {
       setIsBattleOver(true);
@@ -71,24 +156,113 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
   };
 
   const enemyTurn = () => {
+    if (isBattleOver) return;
+
+    // Check Status
+    if (enemy.status === 'SLP') {
+      if (enemy.sleepTurns && enemy.sleepTurns > 0) {
+        addLog(`${enemy.name} nemico sta dormendo...`, 'status');
+        setEnemy(prev => ({ ...prev, sleepTurns: (prev.sleepTurns || 1) - 1 }));
+        applyEndTurnEffects('enemy');
+        return;
+      } else {
+        addLog(`${enemy.name} nemico si è svegliato!`, 'status');
+        setEnemy(prev => ({ ...prev, status: null }));
+      }
+    }
+
+    if (enemy.status === 'FRZ') {
+      if (Math.random() < 0.2) {
+        addLog(`${enemy.name} nemico si è scongelato!`, 'status');
+        setEnemy(prev => ({ ...prev, status: null }));
+      } else {
+        addLog(`${enemy.name} nemico è congelato!`, 'status');
+        applyEndTurnEffects('enemy');
+        return;
+      }
+    }
+
+    if (enemy.status === 'PAR' && Math.random() < 0.25) {
+      addLog(`${enemy.name} nemico è paralizzato!`, 'status');
+      applyEndTurnEffects('enemy');
+      return;
+    }
+
     const move = enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
-    const { damage, effectiveness } = calculateDamage(enemy, player, move);
+    const { damage, effectiveness, isCritical, isMiss } = calculateDamage(enemy, player, move);
+    
+    if (isMiss) {
+      addLog(`L'attacco di ${enemy.name} nemico è fallito!`, 'status');
+      applyEndTurnEffects('enemy');
+      return;
+    }
+
     const newPlayerHp = Math.max(0, player.currentHp - damage);
 
-    setPlayer(prev => ({ ...prev, currentHp: newPlayerHp }));
     addLog(`${enemy.name} nemico usa ${move.name}!`, 'info');
+    if (isCritical) addLog('Brutto colpo!', 'damage');
     
     if (effectiveness > 1) addLog('È superefficace!', 'status');
     if (effectiveness < 1 && effectiveness > 0) addLog('Non è molto efficace...', 'status');
     if (effectiveness === 0) addLog('Non ha effetto...', 'status');
 
-    addLog(`Danno ricevuto: ${damage}`, 'damage');
+    if (damage > 0) addLog(`Danno ricevuto: ${damage}`, 'damage');
+
+    // Handle Ailments for Player
+    let newPlayerStatus = player.status;
+    if (move.ailment && !player.status && Math.random() * 100 < (move.ailmentChance || 100)) {
+      const ailmentMap: Record<string, any> = {
+        'paralysis': 'PAR',
+        'burn': 'BRN',
+        'poison': 'PSN',
+        'sleep': 'SLP',
+        'freeze': 'FRZ'
+      };
+      newPlayerStatus = ailmentMap[move.ailment] || null;
+      if (newPlayerStatus) {
+        addLog(`${player.name} è rimasto ${move.ailment}!`, 'status');
+      }
+    }
+
+    setPlayer(prev => ({ 
+      ...prev, 
+      currentHp: newPlayerHp, 
+      status: newPlayerStatus,
+      sleepTurns: newPlayerStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
+    }));
 
     if (newPlayerHp === 0) {
       setIsBattleOver(true);
       addLog(`${player.name} è esausto... Sconfitta.`, 'defeat');
       setTimeout(() => onBattleEnd('enemy'), 2000);
     } else {
+      applyEndTurnEffects('enemy');
+    }
+  };
+
+  const applyEndTurnEffects = (side: 'player' | 'enemy') => {
+    const target = side === 'player' ? player : enemy;
+    const setTarget = side === 'player' ? setPlayer : setEnemy;
+    
+    let damage = 0;
+    if (target.status === 'BRN' || target.status === 'PSN') {
+      damage = Math.floor(target.maxHp / 16);
+      addLog(`${target.name} subisce danni dallo stato!`, 'damage');
+    }
+
+    if (damage > 0) {
+      const newHp = Math.max(0, target.currentHp - damage);
+      setTarget(prev => ({ ...prev, currentHp: newHp }));
+      
+      if (newHp === 0) {
+        setIsBattleOver(true);
+        addLog(`${target.name} è esausto per lo stato!`, side === 'player' ? 'defeat' : 'victory');
+        setTimeout(() => onBattleEnd(side === 'player' ? 'enemy' : 'player'), 2000);
+        return;
+      }
+    }
+
+    if (side === 'enemy') {
       setIsPlayerTurn(true);
     }
   };
@@ -112,8 +286,20 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
             className="bg-slate-800/80 p-4 rounded-2xl border border-white/10 w-64 shadow-xl"
           >
             <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-lg">{enemy.name}</span>
-              <span className="text-xs opacity-60">Lv. 50</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-lg">{enemy.name}</span>
+                {enemy.status && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold text-white
+                    ${enemy.status === 'PAR' ? 'bg-amber-400' : 
+                      enemy.status === 'BRN' ? 'bg-rose-500' :
+                      enemy.status === 'PSN' ? 'bg-purple-500' :
+                      enemy.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
+                  >
+                    {enemy.status}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs opacity-60">Lv. {enemy.level || 50}</span>
             </div>
             <div className="h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
               <motion.div 
@@ -157,8 +343,20 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
             className="bg-slate-800/80 p-4 rounded-2xl border border-white/10 w-64 shadow-xl"
           >
             <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-lg">{player.name}</span>
-              <span className="text-xs opacity-60">Lv. 50</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-lg">{player.name}</span>
+                {player.status && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold text-white
+                    ${player.status === 'PAR' ? 'bg-amber-400' : 
+                      player.status === 'BRN' ? 'bg-rose-500' :
+                      player.status === 'PSN' ? 'bg-purple-500' :
+                      player.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
+                  >
+                    {player.status}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs opacity-60">Lv. {player.level}</span>
             </div>
             <div className="h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
               <motion.div 

@@ -1,4 +1,33 @@
-import { Pokemon, Type, Move } from './types';
+import { Pokemon, Type, Move, Stats, DamageClass } from './types';
+
+const formatMove = (moveData: any): Move => {
+  const statMapping: Record<string, keyof Stats> = {
+    'hp': 'hp',
+    'attack': 'attack',
+    'defense': 'defense',
+    'special-attack': 'spAtk',
+    'special-defense': 'spDef',
+    'speed': 'speed'
+  };
+
+  const statChanges = moveData.stat_changes?.map((sc: any) => ({
+    stat: statMapping[sc.stat.name] || 'attack',
+    change: sc.change
+  }));
+
+  return {
+    id: moveData.name,
+    name: moveData.names.find((n: any) => n.language.name === 'it')?.name || moveData.name,
+    type: (moveData.type.name.charAt(0).toUpperCase() + moveData.type.name.slice(1)) as Type,
+    power: moveData.power || 0,
+    accuracy: moveData.accuracy || 100,
+    pp: moveData.pp || 20,
+    damageClass: moveData.damage_class.name as DamageClass,
+    ailment: moveData.meta?.ailment?.name !== 'none' ? moveData.meta?.ailment?.name : undefined,
+    ailmentChance: moveData.meta?.ailment_chance || 0,
+    statChanges: statChanges?.length > 0 ? statChanges : undefined,
+  };
+};
 
 export async function fetchPokemonData(id: number): Promise<Pokemon> {
   const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
@@ -26,14 +55,7 @@ export async function fetchPokemonData(id: number): Promise<Pokemon> {
       .map(async (m: any) => {
         const moveRes = await fetch(m.move.url);
         const moveData = await moveRes.json();
-        return {
-          id: moveData.name,
-          name: moveData.names.find((n: any) => n.language.name === 'it')?.name || moveData.name,
-          type: (moveData.type.name.charAt(0).toUpperCase() + moveData.type.name.slice(1)) as Type,
-          power: moveData.power || 40,
-          accuracy: moveData.accuracy || 100,
-          pp: moveData.pp || 20,
-        };
+        return formatMove(moveData);
       })
   );
 
@@ -45,6 +67,7 @@ export async function fetchPokemonData(id: number): Promise<Pokemon> {
     moves,
     ability: data.abilities[0].ability.name,
     spriteUrl: data.sprites.front_default,
+    cryUrl: data.cries?.latest || data.cries?.legacy,
   };
 }
 
@@ -82,14 +105,7 @@ export async function fetchNewMove(pokemonId: string, currentMoveIds: string[]):
     finalMoveData = fetchedMoves[0];
   }
 
-  return {
-    id: finalMoveData.name,
-    name: finalMoveData.names.find((n: any) => n.language.name === 'it')?.name || finalMoveData.name,
-    type: (finalMoveData.type.name.charAt(0).toUpperCase() + finalMoveData.type.name.slice(1)) as Type,
-    power: finalMoveData.power || 40,
-    accuracy: finalMoveData.accuracy || 100,
-    pp: finalMoveData.pp || 20,
-  };
+  return formatMove(finalMoveData);
 }
 
 export async function generateDraft(): Promise<Pokemon[]> {

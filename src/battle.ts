@@ -44,13 +44,33 @@ export function getTypeEffectiveness(attackType: Type, targetType: Type): number
  * Formula del danno ufficiale:
  * Damage = (((2 * Level / 5 + 2) * Power * A/D) / 50 + 2) * Modifier
  */
-export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon, move: Move): { damage: number, effectiveness: number } {
-  const level = 50;
+export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon, move: Move): { 
+  damage: number, 
+  effectiveness: number, 
+  isCritical: boolean, 
+  isMiss: boolean 
+} {
+  // Accuracy check
+  const randomAccuracy = Math.random() * 100;
+  if (randomAccuracy > move.accuracy) {
+    return { damage: 0, effectiveness: 1, isCritical: false, isMiss: true };
+  }
+
+  // Status moves don't deal direct damage
+  if (move.damageClass === 'status') {
+    return { damage: 0, effectiveness: 1, isCritical: false, isMiss: false };
+  }
+
+  const level = attacker.level || 50;
   
-  // In un sistema reale dovremmo distinguere tra Physical e Special basandoci sulla mossa
-  // Per ora usiamo attack/defense come default
-  const A = attacker.actualStats.attack; 
-  const D = defender.actualStats.defense;
+  // Damage Class handling
+  let A = move.damageClass === 'physical' ? attacker.actualStats.attack : attacker.actualStats.spAtk;
+  let D = move.damageClass === 'physical' ? defender.actualStats.defense : defender.actualStats.spDef;
+
+  // Burn reduces physical attack by 50%
+  if (attacker.status === 'BRN' && move.damageClass === 'physical') {
+    A = Math.floor(A * 0.5);
+  }
 
   const baseDamage = (((2 * level / 5 + 2) * move.power * (A / D)) / 50 + 2);
   
@@ -60,12 +80,16 @@ export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon
   // STAB (Same Type Attack Bonus)
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
 
+  // Critical Hit (6.25% chance)
+  const isCritical = Math.random() < 0.0625;
+  const critMultiplier = isCritical ? 1.5 : 1;
+
   // Type Effectiveness
   let effectiveness = 1;
   defender.types.forEach(type => {
     effectiveness *= getTypeEffectiveness(move.type, type);
   });
 
-  const damage = Math.floor(baseDamage * random * stab * effectiveness);
-  return { damage, effectiveness };
+  const damage = Math.floor(baseDamage * random * stab * effectiveness * critMultiplier);
+  return { damage, effectiveness, isCritical, isMiss: false };
 }
