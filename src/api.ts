@@ -26,6 +26,7 @@ const formatMove = (moveData: any): Move => {
     ailment: moveData.meta?.ailment?.name !== 'none' ? moveData.meta?.ailment?.name : undefined,
     ailmentChance: moveData.meta?.ailment_chance || 0,
     statChanges: statChanges?.length > 0 ? statChanges : undefined,
+    target: moveData.target?.name,
   };
 };
 

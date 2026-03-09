@@ -8,8 +8,43 @@ interface RoomNavigationProps {
 }
 
 export default function RoomNavigation({ roomNumber, onEnterBattle }: RoomNavigationProps) {
+  const nextBossRoom = Math.ceil(roomNumber / 10) * 10;
+  const progress = ((roomNumber % 10) || 10) / 10;
+
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+      {/* Visual Progression Map */}
+      <div className="w-full max-w-3xl mb-12">
+        <div className="flex justify-between items-center mb-4 px-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Progressione Scalata</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400">Prossimo Boss: Stanza {nextBossRoom}</span>
+        </div>
+        <div className="relative h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${(roomNumber / 100) * 100}%` }}
+            className="absolute h-full bg-gradient-to-r from-indigo-600 to-violet-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]"
+          />
+          {/* Boss Markers */}
+          {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(bossRoom => (
+            <div 
+              key={bossRoom}
+              className={`absolute top-0 w-1 h-full z-10 ${roomNumber >= bossRoom ? 'bg-white/40' : 'bg-white/10'}`}
+              style={{ left: `${bossRoom}%` }}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between mt-2 px-1">
+          <span className="text-[9px] font-mono text-slate-600">0</span>
+          <div className="flex gap-4">
+            {[25, 50, 75].map(p => (
+              <span key={p} className="text-[9px] font-mono text-slate-600">{p}</span>
+            ))}
+          </div>
+          <span className="text-[9px] font-mono text-slate-600 text-rose-500 font-bold">100</span>
+        </div>
+      </div>
+
       <div className="text-center mb-12">
         <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1 rounded-full text-indigo-400 text-sm font-bold mb-4">
           <MapIcon size={14} />
@@ -36,10 +71,7 @@ export default function RoomNavigation({ roomNumber, onEnterBattle }: RoomNaviga
       </div>
 
       <div className="mt-12 flex items-center gap-8 text-slate-500">
-        <div className="flex flex-col items-center gap-1">
-          <Skull size={20} />
-          <span className="text-[10px] font-bold uppercase">Boss al piano 10</span>
-        </div>
+        {/* Map legend or other info could go here */}
       </div>
     </div>
   );

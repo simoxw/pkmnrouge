@@ -8,10 +8,12 @@ import { RotateCcw, Download, Loader2, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fetchPokemonData, fetchNewMove } from './api';
 import { BOSS_ENCOUNTERS, ITEMS } from './constants';
-import { getActualStats, updateStats } from './battle';
+import { getActualStats, updateStats } from './utils/battleMechanics';
 import { Item, InventoryItem } from './types';
+import { useGameSave } from './hooks/useGameSave';
+import { useSoundEffects } from './hooks/useSoundEffects';
 
-const SAVE_KEY = 'poke_rogue_save';
+
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('DRAFT');
@@ -20,57 +22,30 @@ export default function App() {
   const [roomNumber, setRoomNumber] = useState(1);
   const [money, setMoney] = useState(100); // Start with 100 money
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [hasSave, setHasSave] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
   const [pendingMove, setPendingMove] = useState<{ pokemonIndex: number, newMove: any } | null>(null);
 
-  useEffect(() => {
-    const savedData = localStorage.getItem(SAVE_KEY);
-    if (savedData) {
-      setHasSave(true);
-    }
-  }, []);
+  // handle persistent storage and provide helpers
+  const { hasSave, loadGame } = useGameSave({ party, roomNumber, money, inventory, gameState });
+  
+  // sound effects for UI interactions
+  const { playSound } = useSoundEffects(true);
 
-  useEffect(() => {
-    if (gameState !== 'DRAFT' && gameState !== 'GAME_OVER' && party.length > 0) {
-      const saveData: SaveData = {
-        gameState,
-        party,
-        roomNumber,
-        money,
-        inventory,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
-      setHasSave(true);
-    }
-    
-    if (gameState === 'GAME_OVER') {
-      localStorage.removeItem(SAVE_KEY);
-      setHasSave(false);
-    }
-  }, [gameState, party, roomNumber]);
-
-  const loadGame = () => {
-    const savedData = localStorage.getItem(SAVE_KEY);
-    if (savedData) {
-      try {
-        const data: SaveData = JSON.parse(savedData);
-        setParty(data.party);
-        setRoomNumber(data.roomNumber);
-        setMoney(data.money || 0);
-        setInventory(data.inventory || []);
-        setGameState(data.gameState === 'BATTLE' ? 'NAVIGATION' : data.gameState);
-      } catch (e) {
-        console.error("Save load error", e);
-        localStorage.removeItem(SAVE_KEY);
-        setHasSave(false);
-      }
+  const handleLoadGame = () => {
+    playSound('click');
+    const data = loadGame();
+    if (data) {
+      setParty(data.party);
+      setRoomNumber(data.roomNumber);
+      setMoney(data.money || 0);
+      setInventory(data.inventory || []);
+      setGameState(data.gameState === 'BATTLE' ? 'NAVIGATION' : data.gameState);
     }
   };
 
   const handlePokemonSelect = (pokemon: Pokemon) => {
+    playSound('click');
     const actualStats = getActualStats(pokemon.baseStats);
     const newPokemon: BattlePokemon = {
       ...pokemon,
@@ -295,7 +270,11 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-slate-950">
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950">
+      {/* orientation warning for landscape mode */}
+      <div className="orientation-warning hidden fixed inset-0 bg-black/80 text-white flex items-center justify-center text-xl font-bold z-50">
+        Ruota il dispositivo in verticale per continuare
+      </div>
       {loading && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
           <Loader2 className="animate-spin text-indigo-500 mb-4" size={48} />
@@ -308,7 +287,7 @@ export default function App() {
           {hasSave && (
             <div className="absolute top-6 right-6 z-50">
               <button
-                onClick={loadGame}
+                onClick={handleLoadGame}
                 className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
               >
                 <Download size={18} />

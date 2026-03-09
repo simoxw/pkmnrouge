@@ -6,4 +6,74 @@
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
   }
+
+  /* Mobile viewport height fix */
+  .h-screen-safe {
+    height: 100dvh;
+    height: 100vh;
+  }
+
+  /* Portrait-only warning overlay */
+  .landscape-warning {
+    display: none;
+  }
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    .landscape-warning {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(8px);
+      flex-direction: column;
+      gap: 1.5rem;
+      padding: 2rem;
+      text-align: center;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .landscape-warning h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fbbf24;
+    }
+
+    .landscape-warning p {
+      font-size: 1rem;
+      opacity: 0.8;
+      max-width: 300px;
+    }
+
+    .landscape-warning svg {
+      width: 4rem;
+      height: 4rem;
+      opacity: 0.6;
+      animation: rotate 2s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  }
+}
+
+/* Root container scaling */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
 }

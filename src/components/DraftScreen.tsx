@@ -4,7 +4,7 @@ import { generateDraft } from '../api';
 import { motion } from 'motion/react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
-import { getActualStats } from '../battle';
+import { getActualStats } from '../utils/battleMechanics';
 
 interface DraftScreenProps {
   onSelect: (pokemon: Pokemon) => void;
