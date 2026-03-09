@@ -48,6 +48,50 @@ export async function fetchPokemonData(id: number): Promise<Pokemon> {
   };
 }
 
+export async function fetchNewMove(pokemonId: string, currentMoveIds: string[]): Promise<Move | null> {
+  const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+  const data = await response.json();
+
+  const pokemonTypes = data.types.map((t: any) => t.type.name);
+  
+  const availableMoves = data.moves.filter((m: any) => !currentMoveIds.includes(m.move.name));
+  if (availableMoves.length === 0) return null;
+
+  // Try to find a move that matches one of the pokemon's types
+  let filteredMoves = [];
+  
+  // We need to check the type of each move, which requires another fetch.
+  // To avoid hundreds of fetches, we'll pick a subset of available moves and check them.
+  const subset = availableMoves.sort(() => 0.5 - Math.random()).slice(0, 10);
+  const fetchedMoves = [];
+  
+  for (const m of subset) {
+    const moveRes = await fetch(m.move.url);
+    const moveData = await moveRes.json();
+    fetchedMoves.push(moveData);
+    if (pokemonTypes.includes(moveData.type.name)) {
+      filteredMoves.push(moveData);
+    }
+  }
+
+  // If we found type-consistent moves, pick one. Otherwise pick a random one from the subset.
+  let finalMoveData;
+  if (filteredMoves.length > 0) {
+    finalMoveData = filteredMoves[Math.floor(Math.random() * filteredMoves.length)];
+  } else {
+    finalMoveData = fetchedMoves[0];
+  }
+
+  return {
+    id: finalMoveData.name,
+    name: finalMoveData.names.find((n: any) => n.language.name === 'it')?.name || finalMoveData.name,
+    type: (finalMoveData.type.name.charAt(0).toUpperCase() + finalMoveData.type.name.slice(1)) as Type,
+    power: finalMoveData.power || 40,
+    accuracy: finalMoveData.accuracy || 100,
+    pp: finalMoveData.pp || 20,
+  };
+}
+
 export async function generateDraft(): Promise<Pokemon[]> {
   const ids = Array.from({ length: 3 }, () => Math.floor(Math.random() * 493) + 1);
   return Promise.all(ids.map(id => fetchPokemonData(id)));

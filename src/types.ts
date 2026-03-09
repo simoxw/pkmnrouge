@@ -59,7 +59,7 @@ export interface BattleLog {
   type: 'info' | 'damage' | 'status' | 'victory' | 'defeat';
 }
 
-export type GameState = 'DRAFT' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'GAME_OVER';
+export type GameState = 'DRAFT' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'GAME_OVER';
 
 export interface SaveData {
   gameState: GameState;

@@ -5,7 +5,7 @@ import RoomNavigation from './components/RoomNavigation';
 import BattleEngine from './components/BattleEngine';
 import { RotateCcw, Download, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { fetchPokemonData } from './api';
+import { fetchPokemonData, fetchNewMove } from './api';
 import { BOSS_ENCOUNTERS } from './constants';
 import { getActualStats, updateStats } from './battle';
 
@@ -19,6 +19,7 @@ export default function App() {
   const [hasSave, setHasSave] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
+  const [pendingMove, setPendingMove] = useState<{ pokemonIndex: number, newMove: any } | null>(null);
 
   useEffect(() => {
     const savedData = localStorage.getItem(SAVE_KEY);
@@ -128,14 +129,25 @@ export default function App() {
     }
   };
 
-  const handleBattleEnd = (winner: 'player' | 'enemy') => {
+  const handleSwitch = (index: number) => {
+    if (index === 0 || index >= party.length) return;
+    const newParty = [...party];
+    const temp = newParty[0];
+    newParty[0] = newParty[index];
+    newParty[index] = temp;
+    setParty(newParty);
+  };
+
+  const handleBattleEnd = async (winner: 'player' | 'enemy') => {
     if (winner === 'player') {
       // Level Up & Heal Active Pokemon
       const updatedParty = [...party];
       let activePkmn = updatedParty[0];
       
       // Level Up
-      activePkmn = updateStats(activePkmn, activePkmn.level + 1);
+      const oldLevel = activePkmn.level;
+      const newLevel = oldLevel + 1;
+      activePkmn = updateStats(activePkmn, newLevel);
       
       // Heal 30%
       const healAmount = Math.floor(activePkmn.maxHp * 0.3);
@@ -143,6 +155,25 @@ export default function App() {
       
       updatedParty[0] = activePkmn;
       setParty(updatedParty);
+
+      // Move Learning every 5 levels
+      if (newLevel % 5 === 0) {
+        setLoading(true);
+        try {
+          const currentMoveIds = activePkmn.moves.map(m => m.id);
+          const newMove = await fetchNewMove(activePkmn.id, currentMoveIds);
+          if (newMove) {
+            setPendingMove({ pokemonIndex: 0, newMove });
+            setGameState('LEARN_MOVE');
+            setLoading(false);
+            return; // Wait for move choice
+          }
+        } catch (e) {
+          console.error("Failed to learn new move", e);
+        } finally {
+          setLoading(false);
+        }
+      }
 
       const nextRoom = roomNumber + 1;
       setRoomNumber(nextRoom);
@@ -156,6 +187,33 @@ export default function App() {
       }
     } else {
       setGameState('GAME_OVER');
+    }
+  };
+
+  const handleLearnMove = (replaceIndex: number | null) => {
+    if (!pendingMove) return;
+
+    if (replaceIndex !== null) {
+      const updatedParty = [...party];
+      const pkmn = { ...updatedParty[pendingMove.pokemonIndex] };
+      const newMoves = [...pkmn.moves];
+      newMoves[replaceIndex] = pendingMove.newMove;
+      pkmn.moves = newMoves;
+      updatedParty[pendingMove.pokemonIndex] = pkmn;
+      setParty(updatedParty);
+    }
+
+    setPendingMove(null);
+    
+    // Continue to next state
+    const nextRoom = roomNumber + 1;
+    setRoomNumber(nextRoom);
+    
+    const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
+    if (isBossFloor && (roomNumber <= 50 || roomNumber >= 60)) {
+      setGameState('RECRUITMENT');
+    } else {
+      setGameState('NAVIGATION');
     }
   };
 
@@ -240,7 +298,57 @@ export default function App() {
           enemyPokemon={enemyPokemon} 
           party={party}
           onBattleEnd={handleBattleEnd} 
+          onSwitch={handleSwitch}
         />
+      )}
+
+      {gameState === 'LEARN_MOVE' && pendingMove && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-white">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center max-w-2xl w-full"
+          >
+            <h2 className="text-3xl font-black mb-2 uppercase italic tracking-tighter">Nuova Mossa!</h2>
+            <p className="text-slate-400 mb-8">
+              {party[pendingMove.pokemonIndex].name} vuole imparare <span className="text-indigo-400 font-bold">{pendingMove.newMove.name}</span>.
+              Scegli quale mossa dimenticare.
+            </p>
+
+            <div className="bg-indigo-600/10 border border-indigo-500/30 p-6 rounded-3xl mb-8 flex flex-col items-center">
+              <div className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold mb-1">Nuova Mossa</div>
+              <div className="text-2xl font-black uppercase">{pendingMove.newMove.name}</div>
+              <div className="flex gap-4 mt-2 text-sm opacity-70 font-mono">
+                <span>TIPO: {pendingMove.newMove.type}</span>
+                <span>PWR: {pendingMove.newMove.power}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {party[pendingMove.pokemonIndex].moves.map((move, i) => (
+                <button
+                  key={move.id + i}
+                  onClick={() => handleLearnMove(i)}
+                  className="bg-slate-900 border border-white/10 p-5 rounded-2xl hover:bg-slate-800 hover:border-white/30 transition-all text-left group"
+                >
+                  <div className="text-[10px] text-slate-500 mb-1 uppercase font-bold">Slot {i + 1}</div>
+                  <div className="font-bold text-lg group-hover:text-indigo-300 transition-colors">{move.name}</div>
+                  <div className="flex gap-3 mt-1 text-xs opacity-50 font-mono">
+                    <span>{move.type}</span>
+                    <span>PWR: {move.power}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => handleLearnMove(null)}
+              className="mt-10 text-slate-500 hover:text-rose-400 text-sm font-bold uppercase tracking-widest transition-colors"
+            >
+              Non imparare {pendingMove.newMove.name}
+            </button>
+          </motion.div>
+        </div>
       )}
 
       {gameState === 'GAME_OVER' && (

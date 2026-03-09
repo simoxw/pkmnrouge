@@ -9,14 +9,16 @@ interface BattleEngineProps {
   enemyPokemon: BattlePokemon;
   party: BattlePokemon[];
   onBattleEnd: (winner: 'player' | 'enemy') => void;
+  onSwitch: (index: number) => void;
 }
 
-export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemon: initialEnemy, party, onBattleEnd }: BattleEngineProps) {
+export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemon: initialEnemy, party, onBattleEnd, onSwitch }: BattleEngineProps) {
   const [player, setPlayer] = useState<BattlePokemon>({ ...initialPlayer });
   const [enemy, setEnemy] = useState<BattlePokemon>({ ...initialEnemy });
   const [logs, setLogs] = useState<BattleLog[]>([]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemy.actualStats.speed);
   const [isBattleOver, setIsBattleOver] = useState(false);
+  const [showSwitchMenu, setShowSwitchMenu] = useState(false);
 
   const addLog = (message: string, type: BattleLog['type'] = 'info') => {
     setLogs(prev => [{ id: Math.random().toString(), message, type }, ...prev].slice(0, 5));
@@ -51,6 +53,21 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     } else {
       setIsPlayerTurn(false);
     }
+  };
+
+  const handleSwitch = (index: number) => {
+    if (index === 0 || party[index].currentHp <= 0) return;
+    
+    const newActive = party[index];
+    addLog(`Rientra ${player.name}! Vai ${newActive.name}!`, 'info');
+    
+    // Update local state
+    setPlayer({ ...newActive });
+    onSwitch(index);
+    setShowSwitchMenu(false);
+    
+    // Switching consumes turn
+    setIsPlayerTurn(false);
   };
 
   const enemyTurn = () => {
@@ -182,9 +199,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
             <button
               key={move.id}
               onClick={() => handleMove(move)}
-              disabled={!isPlayerTurn || isBattleOver}
+              disabled={!isPlayerTurn || isBattleOver || showSwitchMenu}
               className={`p-4 rounded-xl border transition-all flex flex-col items-start gap-1 group
-                ${isPlayerTurn && !isBattleOver 
+                ${isPlayerTurn && !isBattleOver && !showSwitchMenu
                   ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-95' 
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
@@ -195,7 +212,62 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
               </div>
             </button>
           ))}
+          
+          {/* Switch Button */}
+          <button
+            onClick={() => setShowSwitchMenu(true)}
+            disabled={!isPlayerTurn || isBattleOver || party.length <= 1}
+            className={`col-span-2 p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-xs
+              ${isPlayerTurn && !isBattleOver && party.length > 1
+                ? 'bg-indigo-600/20 border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 hover:border-indigo-500/50'
+                : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
+          >
+            Cambia Pokémon
+          </button>
         </div>
+
+        {/* Switch Menu Overlay */}
+        <AnimatePresence>
+          {showSwitchMenu && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+            >
+              <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+                <h3 className="text-xl font-bold mb-4 text-center uppercase tracking-tighter">Scegli Pokémon</h3>
+                <div className="grid gap-3">
+                  {party.map((member, i) => (
+                    <button
+                      key={member.id + i}
+                      disabled={i === 0 || member.currentHp <= 0}
+                      onClick={() => handleSwitch(i)}
+                      className={`p-4 rounded-2xl border flex items-center justify-between transition-all
+                        ${i === 0 ? 'border-indigo-500/50 bg-indigo-500/10 opacity-50 cursor-not-allowed' : 
+                          member.currentHp > 0 ? 'border-white/10 bg-slate-800 hover:bg-slate-700 hover:border-white/30' : 
+                          'border-rose-500/20 bg-rose-500/5 opacity-40 cursor-not-allowed'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="font-bold">{member.name}</div>
+                        <div className="text-[10px] opacity-50">Lv. {member.level}</div>
+                      </div>
+                      <div className="text-xs font-mono">
+                        {member.currentHp} / {member.maxHp} HP
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setShowSwitchMenu(false)}
+                  className="w-full mt-6 p-3 text-slate-500 hover:text-white font-bold uppercase text-xs tracking-widest"
+                >
+                  Annulla
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Battle Log */}
         <div className="w-full md:w-80 bg-black/40 rounded-xl p-4 overflow-y-auto border border-white/5">
