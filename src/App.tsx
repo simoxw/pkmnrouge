@@ -3,11 +3,13 @@ import { Pokemon, BattlePokemon, GameState, SaveData } from './types';
 import DraftScreen from './components/DraftScreen';
 import RoomNavigation from './components/RoomNavigation';
 import BattleEngine from './components/BattleEngine';
-import { RotateCcw, Download, Loader2 } from 'lucide-react';
+import ShopScreen from './components/ShopScreen';
+import { RotateCcw, Download, Loader2, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fetchPokemonData, fetchNewMove } from './api';
-import { BOSS_ENCOUNTERS } from './constants';
+import { BOSS_ENCOUNTERS, ITEMS } from './constants';
 import { getActualStats, updateStats } from './battle';
+import { Item, InventoryItem } from './types';
 
 const SAVE_KEY = 'poke_rogue_save';
 
@@ -16,6 +18,8 @@ export default function App() {
   const [party, setParty] = useState<BattlePokemon[]>([]);
   const [enemyPokemon, setEnemyPokemon] = useState<BattlePokemon | null>(null);
   const [roomNumber, setRoomNumber] = useState(1);
+  const [money, setMoney] = useState(500); // Start with some money
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [hasSave, setHasSave] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
@@ -34,6 +38,8 @@ export default function App() {
         gameState,
         party,
         roomNumber,
+        money,
+        inventory,
         timestamp: Date.now()
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
@@ -53,6 +59,8 @@ export default function App() {
         const data: SaveData = JSON.parse(savedData);
         setParty(data.party);
         setRoomNumber(data.roomNumber);
+        setMoney(data.money || 0);
+        setInventory(data.inventory || []);
         setGameState(data.gameState === 'BATTLE' ? 'NAVIGATION' : data.gameState);
       } catch (e) {
         console.error("Save load error", e);
@@ -142,6 +150,9 @@ export default function App() {
 
   const handleBattleEnd = async (winner: 'player' | 'enemy') => {
     if (winner === 'player') {
+      // Award money
+      setMoney(prev => prev + 100);
+
       // Level Up & Heal Active Pokemon
       const updatedParty = [...party];
       let activePkmn = updatedParty[0];
@@ -222,9 +233,45 @@ export default function App() {
   const restartGame = () => {
     setGameState('DRAFT');
     setRoomNumber(1);
+    setMoney(500);
+    setInventory([]);
     setParty([]);
     setEnemyPokemon(null);
     setPendingRecruit(null);
+  };
+
+  const handleBuyItem = (item: Item) => {
+    setMoney(prev => prev - item.price);
+    setInventory(prev => {
+      const existing = prev.find(i => i.itemId === item.id);
+      if (existing) {
+        return prev.map(i => i.itemId === item.id ? { ...i, count: i.count + 1 } : i);
+      }
+      return [...prev, { itemId: item.id, count: 1 }];
+    });
+  };
+
+  const handleUseItem = (itemId: string, pokemonIndex: number): string => {
+    const item = ITEMS.find(i => i.id === itemId);
+    if (!item) return "Strumento non trovato.";
+
+    const targetPkmn = party[pokemonIndex];
+    const { updatedPokemon, message } = item.effect(targetPkmn);
+
+    if (updatedPokemon === targetPkmn) return message; // Effect didn't apply
+
+    // Update party
+    const newParty = [...party];
+    newParty[pokemonIndex] = updatedPokemon;
+    setParty(newParty);
+
+    // Update inventory
+    setInventory(prev => {
+      return prev.map(i => i.itemId === itemId ? { ...i, count: i.count - 1 } : i)
+        .filter(i => i.count > 0);
+    });
+
+    return message;
   };
 
   return (
@@ -254,9 +301,31 @@ export default function App() {
       )}
 
       {gameState === 'NAVIGATION' && (
-        <RoomNavigation 
-          roomNumber={roomNumber} 
-          onEnterBattle={startBattle} 
+        <div className="h-full flex flex-col">
+          <div className="absolute top-6 right-6 z-50 flex gap-4">
+            <div className="flex items-center gap-2 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl shadow-lg">
+              <ShoppingBag className="text-indigo-400" size={18} />
+              <span className="font-bold text-white font-mono">{money} $</span>
+            </div>
+            <button
+              onClick={() => setGameState('SHOP')}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg transition-all active:scale-95"
+            >
+              Negozio
+            </button>
+          </div>
+          <RoomNavigation 
+            roomNumber={roomNumber} 
+            onEnterBattle={startBattle} 
+          />
+        </div>
+      )}
+
+      {gameState === 'SHOP' && (
+        <ShopScreen 
+          money={money} 
+          onBuy={handleBuyItem} 
+          onExit={() => setGameState('NAVIGATION')} 
         />
       )}
 
@@ -299,8 +368,10 @@ export default function App() {
           playerPokemon={party[0]} 
           enemyPokemon={enemyPokemon} 
           party={party}
+          inventory={inventory}
           onBattleEnd={handleBattleEnd} 
           onSwitch={handleSwitch}
+          onUseItem={handleUseItem}
         />
       )}
 

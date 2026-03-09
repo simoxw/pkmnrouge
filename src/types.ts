@@ -70,12 +70,27 @@ export interface BattleLog {
   type: 'info' | 'damage' | 'status' | 'victory' | 'defeat';
 }
 
-export type GameState = 'DRAFT' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'GAME_OVER';
+export type GameState = 'DRAFT' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER';
+
+export interface Item {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  effect: (pokemon: BattlePokemon) => { updatedPokemon: BattlePokemon, message: string };
+}
+
+export interface InventoryItem {
+  itemId: string;
+  count: number;
+}
 
 export interface SaveData {
   gameState: GameState;
   party: BattlePokemon[];
   roomNumber: number;
+  money: number;
+  inventory: InventoryItem[];
   timestamp: number;
 }
 

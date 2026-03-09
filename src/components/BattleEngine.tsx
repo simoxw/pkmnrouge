@@ -1,24 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { BattlePokemon, Move, BattleLog } from '../types';
+import { BattlePokemon, Move, BattleLog, InventoryItem } from '../types';
 import { calculateDamage } from '../battle';
+import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import PokemonSprite from './PokemonSprite';
+import { Briefcase } from 'lucide-react';
 
 interface BattleEngineProps {
   playerPokemon: BattlePokemon;
   enemyPokemon: BattlePokemon;
   party: BattlePokemon[];
+  inventory: InventoryItem[];
   onBattleEnd: (winner: 'player' | 'enemy') => void;
   onSwitch: (index: number) => void;
+  onUseItem: (itemId: string, pokemonIndex: number) => string;
 }
 
-export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemon: initialEnemy, party, onBattleEnd, onSwitch }: BattleEngineProps) {
+export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemon: initialEnemy, party, inventory, onBattleEnd, onSwitch, onUseItem }: BattleEngineProps) {
   const [player, setPlayer] = useState<BattlePokemon>({ ...initialPlayer, status: initialPlayer.status || null });
   const [enemy, setEnemy] = useState<BattlePokemon>({ ...initialEnemy, status: initialEnemy.status || null });
   const [logs, setLogs] = useState<BattleLog[]>([]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemy.actualStats.speed);
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
+  const [showBagMenu, setShowBagMenu] = useState(false);
+  const [selectedItemForPokemon, setSelectedItemForPokemon] = useState<string | null>(null);
 
   const playCry = (url?: string) => {
     if (!url) return;
@@ -152,6 +158,28 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     setShowSwitchMenu(false);
     
     // Switching consumes turn
+    setIsPlayerTurn(false);
+  };
+
+  const handleUseItemInBattle = (itemId: string, pokemonIndex: number) => {
+    const message = onUseItem(itemId, pokemonIndex);
+    addLog(message, 'status');
+    
+    // Update local state if used on active pokemon
+    if (pokemonIndex === 0) {
+      const updatedPkmn = party[0]; // App.tsx already updated it
+      // Wait, party is updated in App.tsx, but local 'player' state might be stale
+      // Actually, App.tsx updates 'party' which is passed as prop, but 'player' is local state.
+      // Let's sync local state.
+      const item = ITEMS.find(i => i.id === itemId);
+      if (item) {
+        const { updatedPokemon } = item.effect(player);
+        setPlayer(updatedPokemon);
+      }
+    }
+
+    setShowBagMenu(false);
+    setSelectedItemForPokemon(null);
     setIsPlayerTurn(false);
   };
 
@@ -414,15 +442,104 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
           {/* Switch Button */}
           <button
             onClick={() => setShowSwitchMenu(true)}
-            disabled={!isPlayerTurn || isBattleOver || party.length <= 1}
-            className={`col-span-2 p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-xs
-              ${isPlayerTurn && !isBattleOver && party.length > 1
+            disabled={!isPlayerTurn || isBattleOver || party.length <= 1 || showBagMenu}
+            className={`p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-xs
+              ${isPlayerTurn && !isBattleOver && party.length > 1 && !showBagMenu
                 ? 'bg-indigo-600/20 border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 hover:border-indigo-500/50'
                 : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
           >
             Cambia Pokémon
           </button>
+
+          {/* Bag Button */}
+          <button
+            onClick={() => setShowBagMenu(true)}
+            disabled={!isPlayerTurn || isBattleOver || inventory.length === 0 || showSwitchMenu}
+            className={`p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2
+              ${isPlayerTurn && !isBattleOver && inventory.length > 0 && !showSwitchMenu
+                ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 hover:border-emerald-500/50'
+                : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
+          >
+            <Briefcase size={14} />
+            Zaino
+          </button>
         </div>
+
+        {/* Bag Menu Overlay */}
+        <AnimatePresence>
+          {showBagMenu && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+            >
+              <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+                {!selectedItemForPokemon ? (
+                  <>
+                    <h3 className="text-xl font-bold mb-4 text-center uppercase tracking-tighter">Il tuo Zaino</h3>
+                    <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
+                      {inventory.map((invItem) => {
+                        const item = ITEMS.find(i => i.id === invItem.itemId);
+                        if (!item) return null;
+                        return (
+                          <button
+                            key={invItem.itemId}
+                            onClick={() => setSelectedItemForPokemon(invItem.itemId)}
+                            className="p-4 rounded-2xl border border-white/10 bg-slate-800 hover:bg-slate-700 hover:border-white/30 flex items-center justify-between transition-all group"
+                          >
+                            <div className="text-left">
+                              <div className="font-bold uppercase group-hover:text-emerald-400 transition-colors">{item.name}</div>
+                              <div className="text-[10px] opacity-50">{item.description}</div>
+                            </div>
+                            <div className="bg-slate-900 px-3 py-1 rounded-full text-xs font-bold text-emerald-400 border border-white/5">
+                              x{invItem.count}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-bold mb-4 text-center uppercase tracking-tighter">Usa su chi?</h3>
+                    <div className="grid gap-3">
+                      {party.map((member, i) => (
+                        <button
+                          key={member.id + i}
+                          onClick={() => handleUseItemInBattle(selectedItemForPokemon, i)}
+                          className="p-4 rounded-2xl border border-white/10 bg-slate-800 hover:bg-slate-700 hover:border-white/30 flex items-center justify-between transition-all group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="font-bold group-hover:text-emerald-400 transition-colors">{member.name}</div>
+                            {member.status && (
+                              <span className="text-[8px] bg-rose-500 px-1 rounded font-bold">{member.status}</span>
+                            )}
+                          </div>
+                          <div className="text-xs font-mono">
+                            {member.currentHp} / {member.maxHp} HP
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <button 
+                      onClick={() => setSelectedItemForPokemon(null)}
+                      className="w-full mt-4 p-2 text-slate-400 hover:text-white text-xs font-bold uppercase"
+                    >
+                      Indietro
+                    </button>
+                  </>
+                )}
+                <button 
+                  onClick={() => { setShowBagMenu(false); setSelectedItemForPokemon(null); }}
+                  className="w-full mt-6 p-3 text-slate-500 hover:text-white font-bold uppercase text-xs tracking-widest"
+                >
+                  Chiudi Zaino
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Switch Menu Overlay */}
         <AnimatePresence>

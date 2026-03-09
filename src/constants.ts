@@ -1,4 +1,96 @@
-import { Type } from './types';
+import { Type, Item, BattlePokemon } from './types';
+
+export const ITEMS: Item[] = [
+  {
+    id: 'potion',
+    name: 'Pozione',
+    description: 'Cura 50 HP a un Pokémon.',
+    price: 50,
+    effect: (pkmn: BattlePokemon) => {
+      const healAmount = 50;
+      const newHp = Math.min(pkmn.maxHp, pkmn.currentHp + healAmount);
+      return {
+        updatedPokemon: { ...pkmn, currentHp: newHp },
+        message: `${pkmn.name} ha recuperato HP!`
+      };
+    }
+  },
+  {
+    id: 'antidote',
+    name: 'Antidoto',
+    description: 'Cura lo stato di Avvelenamento.',
+    price: 30,
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.status === 'PSN') {
+        return {
+          updatedPokemon: { ...pkmn, status: null },
+          message: `${pkmn.name} è guarito dal veleno!`
+        };
+      }
+      return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
+    }
+  },
+  {
+    id: 'paralyze_heal',
+    name: 'Antiparalisi',
+    description: 'Cura lo stato di Paralisi.',
+    price: 30,
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.status === 'PAR') {
+        return {
+          updatedPokemon: { ...pkmn, status: null },
+          message: `${pkmn.name} non è più paralizzato!`
+        };
+      }
+      return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
+    }
+  },
+  {
+    id: 'awakening',
+    name: 'Sveglia',
+    description: 'Sveglia un Pokémon addormentato.',
+    price: 40,
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.status === 'SLP') {
+        return {
+          updatedPokemon: { ...pkmn, status: null, sleepTurns: 0 },
+          message: `${pkmn.name} si è svegliato!`
+        };
+      }
+      return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
+    }
+  },
+  {
+    id: 'burn_heal',
+    name: 'Antiscottatura',
+    description: 'Cura lo stato di Scottatura.',
+    price: 40,
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.status === 'BRN') {
+        return {
+          updatedPokemon: { ...pkmn, status: null },
+          message: `${pkmn.name} è guarito dalla scottatura!`
+        };
+      }
+      return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
+    }
+  },
+  {
+    id: 'ice_heal',
+    name: 'Antigelo',
+    description: 'Scongela un Pokémon.',
+    price: 40,
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.status === 'FRZ') {
+        return {
+          updatedPokemon: { ...pkmn, status: null },
+          message: `${pkmn.name} si è scongelato!`
+        };
+      }
+      return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
+    }
+  }
+];
 
 export const TYPE_CHART: Record<Type, Partial<Record<Type, number>>> = {
   [Type.NORMAL]: { [Type.ROCK]: 0.5, [Type.STEEL]: 0.5, [Type.GHOST]: 0 },
