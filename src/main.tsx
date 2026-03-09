@@ -7,7 +7,9 @@ import './index.css';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      // use a relative URL and scope so that the worker works even when
+      // the app is served from a subfolder
+      const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
       console.log('[SW] Service Worker registered:', reg);
 
       // Check for updates periodically (every 5 minutes)

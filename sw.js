@@ -1,8 +1,16 @@
 const CACHE_NAME = 'pkmrouge-v1';
+// when the app lives in a sub‑directory (e.g. /pkmnrouge/)
+// we must use relative URLs so that the service worker can resolve
+// them correctly after installation. If you switch the hosting path
+// be sure to update these entries accordingly.
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json',
+  // you can add explicit references to the generated assets here,
+  // for example './assets/index-abc123.js' and './assets/index-xyz.css'.
+  // they change every build, so consider enumerating them during your
+  // build step or using a tool like Workbox to inject a precache manifest.
 ];
 
 // Install event
