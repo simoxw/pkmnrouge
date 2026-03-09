@@ -54,7 +54,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first strategy
+  // navigation requests should resolve to the shell (index) when offline
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('./').then((cached) => {
+        return cached || fetch('./');
+      })
+    );
+    return;
+  }
+
+  // Network first strategy for other resources
   event.respondWith(
     fetch(event.request)
       .then((response) => {
