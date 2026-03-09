@@ -25,6 +25,12 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const [showBagMenu, setShowBagMenu] = useState(false);
   const [selectedItemForPokemon, setSelectedItemForPokemon] = useState<string | null>(null);
+  const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy', text?: string } | null>(null);
+
+  const triggerEffect = (type: string, side: 'player' | 'enemy', text?: string) => {
+    setActiveEffect({ type, side, text });
+    setTimeout(() => setActiveEffect(null), 1000);
+  };
 
   const playCry = (url?: string) => {
     if (!url) return;
@@ -87,6 +93,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     
     if (isMiss) {
       addLog(`L'attacco di ${player.name} è fallito!`, 'status');
+      triggerEffect('miss', 'enemy', 'FALLITO!');
       setIsPlayerTurn(false);
       return;
     }
@@ -94,11 +101,27 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     const newEnemyHp = Math.max(0, enemy.currentHp - damage);
     
     addLog(`${player.name} usa ${move.name}!`, 'info');
-    if (isCritical) addLog('Brutto colpo!', 'damage');
     
-    if (effectiveness > 1) addLog('È superefficace!', 'status');
-    if (effectiveness < 1 && effectiveness > 0) addLog('Non è molto efficace...', 'status');
-    if (effectiveness === 0) addLog('Non ha effetto...', 'status');
+    // Trigger visual effect based on move type
+    triggerEffect(move.type.toLowerCase(), 'enemy');
+    
+    if (isCritical) {
+      addLog('Brutto colpo!', 'damage');
+      setTimeout(() => triggerEffect('crit', 'enemy', 'CRITICO!'), 300);
+    }
+    
+    if (effectiveness > 1) {
+      addLog('È superefficace!', 'status');
+      setTimeout(() => triggerEffect('supereffective', 'enemy', 'SUPEREFFICACE!'), 500);
+    }
+    if (effectiveness < 1 && effectiveness > 0) {
+      addLog('Non è molto efficace...', 'status');
+      setTimeout(() => triggerEffect('ineffective', 'enemy', 'NON EFFICACE'), 500);
+    }
+    if (effectiveness === 0) {
+      addLog('Non ha effetto...', 'status');
+      setTimeout(() => triggerEffect('no-effect', 'enemy', 'NESSUN EFFETTO'), 500);
+    }
     
     if (damage > 0) addLog(`Danno inflitto: ${damage}`, 'damage');
 
@@ -221,6 +244,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     
     if (isMiss) {
       addLog(`L'attacco di ${enemy.name} nemico è fallito!`, 'status');
+      triggerEffect('miss', 'player', 'FALLITO!');
       applyEndTurnEffects('enemy');
       return;
     }
@@ -228,11 +252,27 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     const newPlayerHp = Math.max(0, player.currentHp - damage);
 
     addLog(`${enemy.name} nemico usa ${move.name}!`, 'info');
-    if (isCritical) addLog('Brutto colpo!', 'damage');
     
-    if (effectiveness > 1) addLog('È superefficace!', 'status');
-    if (effectiveness < 1 && effectiveness > 0) addLog('Non è molto efficace...', 'status');
-    if (effectiveness === 0) addLog('Non ha effetto...', 'status');
+    // Trigger visual effect
+    triggerEffect(move.type.toLowerCase(), 'player');
+
+    if (isCritical) {
+      addLog('Brutto colpo!', 'damage');
+      setTimeout(() => triggerEffect('crit', 'player', 'CRITICO!'), 300);
+    }
+    
+    if (effectiveness > 1) {
+      addLog('È superefficace!', 'status');
+      setTimeout(() => triggerEffect('supereffective', 'player', 'SUPEREFFICACE!'), 500);
+    }
+    if (effectiveness < 1 && effectiveness > 0) {
+      addLog('Non è molto efficace...', 'status');
+      setTimeout(() => triggerEffect('ineffective', 'player', 'NON EFFICACE'), 500);
+    }
+    if (effectiveness === 0) {
+      addLog('Non ha effetto...', 'status');
+      setTimeout(() => triggerEffect('no-effect', 'player', 'NESSUN EFFETTO'), 500);
+    }
 
     if (damage > 0) addLog(`Danno ricevuto: ${damage}`, 'damage');
 
@@ -307,7 +347,34 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
       {/* Battle Arena */}
       <div className="flex-1 flex flex-col justify-around relative overflow-hidden">
         {/* Enemy Side */}
-        <div className="flex justify-end items-start p-4">
+        <div className="flex justify-end items-start p-4 relative">
+          {activeEffect?.side === 'enemy' && (
+            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+              <AnimatePresence>
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1.5, opacity: 1 }}
+                  exit={{ scale: 2, opacity: 0 }}
+                  className="relative"
+                >
+                  {activeEffect.text && (
+                    <div className={`text-2xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]
+                      ${activeEffect.type === 'supereffective' ? 'text-amber-400' : 
+                        activeEffect.type === 'ineffective' ? 'text-slate-400' : 
+                        activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
+                    >
+                      {activeEffect.text}
+                    </div>
+                  )}
+                  {/* Visual particles based on type */}
+                  {activeEffect.type === 'fire' && <div className="w-20 h-20 bg-orange-500 rounded-full blur-xl animate-pulse opacity-60" />}
+                  {activeEffect.type === 'water' && <div className="w-20 h-20 bg-blue-500 rounded-full blur-xl animate-pulse opacity-60" />}
+                  {activeEffect.type === 'grass' && <div className="w-20 h-20 bg-emerald-500 rounded-full blur-xl animate-pulse opacity-60" />}
+                  {activeEffect.type === 'electric' && <div className="w-20 h-20 bg-yellow-400 rounded-full blur-xl animate-pulse opacity-60" />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
           <motion.div 
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -341,8 +408,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
             </div>
           </motion.div>
           <motion.div
-            animate={!isPlayerTurn ? { x: [-5, 5, -5] } : {}}
-            transition={{ repeat: Infinity, duration: 0.5 }}
+            animate={!isPlayerTurn ? { x: [-5, 5, -5] } : (activeEffect?.side === 'enemy' ? { x: [0, -10, 10, -10, 0], filter: ['brightness(1)', 'brightness(2)', 'brightness(1)'] } : {})}
+            transition={activeEffect?.side === 'enemy' ? { duration: 0.2 } : { repeat: Infinity, duration: 0.5 }}
           >
             <PokemonSprite 
               id={enemy.id} 
@@ -353,10 +420,36 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
         </div>
 
         {/* Player Side */}
-        <div className="flex justify-start items-end p-4">
+        <div className="flex justify-start items-end p-4 relative">
+          {activeEffect?.side === 'player' && (
+            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+              <AnimatePresence>
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1.5, opacity: 1 }}
+                  exit={{ scale: 2, opacity: 0 }}
+                  className="relative"
+                >
+                  {activeEffect.text && (
+                    <div className={`text-2xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]
+                      ${activeEffect.type === 'supereffective' ? 'text-amber-400' : 
+                        activeEffect.type === 'ineffective' ? 'text-slate-400' : 
+                        activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
+                    >
+                      {activeEffect.text}
+                    </div>
+                  )}
+                  {activeEffect.type === 'fire' && <div className="w-20 h-20 bg-orange-500 rounded-full blur-xl animate-pulse opacity-60" />}
+                  {activeEffect.type === 'water' && <div className="w-20 h-20 bg-blue-500 rounded-full blur-xl animate-pulse opacity-60" />}
+                  {activeEffect.type === 'grass' && <div className="w-20 h-20 bg-emerald-500 rounded-full blur-xl animate-pulse opacity-60" />}
+                  {activeEffect.type === 'electric' && <div className="w-20 h-20 bg-yellow-400 rounded-full blur-xl animate-pulse opacity-60" />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
           <motion.div
-            animate={isPlayerTurn ? { x: [-5, 5, -5] } : {}}
-            transition={{ repeat: Infinity, duration: 0.5 }}
+            animate={isPlayerTurn ? { x: [-5, 5, -5] } : (activeEffect?.side === 'player' ? { x: [0, -10, 10, -10, 0], filter: ['brightness(1)', 'brightness(2)', 'brightness(1)'] } : {})}
+            transition={activeEffect?.side === 'player' ? { duration: 0.2 } : { repeat: Infinity, duration: 0.5 }}
           >
             <PokemonSprite 
               id={player.id} 

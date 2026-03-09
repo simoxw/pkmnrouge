@@ -18,7 +18,7 @@ export default function App() {
   const [party, setParty] = useState<BattlePokemon[]>([]);
   const [enemyPokemon, setEnemyPokemon] = useState<BattlePokemon | null>(null);
   const [roomNumber, setRoomNumber] = useState(1);
-  const [money, setMoney] = useState(500); // Start with some money
+  const [money, setMoney] = useState(100); // Start with 100 money
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [hasSave, setHasSave] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -118,7 +118,12 @@ export default function App() {
       }
 
       const enemyData = await fetchPokemonData(enemyId);
-      const actualStats = getActualStats(enemyData.baseStats);
+      
+      // Level scaling: +5 levels for every 10 rooms
+      const scalingFactor = Math.floor((roomNumber - 1) / 10);
+      const enemyLevel = 50 + (scalingFactor * 5);
+      
+      const actualStats = getActualStats(enemyData.baseStats, enemyLevel);
       
       // Boss have a multiplier on HP
       const hpMultiplier = isBossRoom ? 1.5 : 1;
@@ -129,6 +134,7 @@ export default function App() {
         actualStats,
         currentHp: maxHp,
         maxHp: maxHp,
+        level: enemyLevel,
         status: null
       });
       setGameState('BATTLE');
@@ -233,7 +239,7 @@ export default function App() {
   const restartGame = () => {
     setGameState('DRAFT');
     setRoomNumber(1);
-    setMoney(500);
+    setMoney(100);
     setInventory([]);
     setParty([]);
     setEnemyPokemon(null);
