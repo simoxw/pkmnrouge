@@ -48,21 +48,26 @@ export default function DraftScreen({ onSelect, title = "Scegli il tuo Starter",
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
-        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 flex items-center justify-center gap-3">
-          <Sparkles className="text-amber-400" />
-          {title}
-          <Sparkles className="text-amber-400" />
-        </h1>
-        <p className="text-slate-400">{subtitle}</p>
-      </motion.div>
+    <div className="h-[100dvh] w-full bg-slate-950 text-white flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex-shrink-0 px-4 sm:px-6 pt-6 text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter mb-1 sm:mb-2 flex items-center justify-center gap-2 sm:gap-3">
+            <Sparkles className="text-amber-400 w-6 h-6 sm:w-8 sm:h-8" />
+            {title}
+            <Sparkles className="text-amber-400 w-6 h-6 sm:w-8 sm:h-8" />
+          </h1>
+          <p className="text-slate-400 text-sm sm:text-base">{subtitle}</p>
+        </motion.div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+      {/* Scrollable grid container */}
+      <div className="flex-1 overflow-y-auto scroll-container px-2 sm:px-4 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 w-full max-w-5xl mx-auto py-4">
         {draftOptions.map((pkmn, index) => {
           const stats = getActualStats(pkmn.baseStats);
           return (
@@ -72,7 +77,7 @@ export default function DraftScreen({ onSelect, title = "Scegli il tuo Starter",
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               onClick={() => onSelect(pkmn)}
-              className="group relative bg-slate-900 border border-white/10 rounded-3xl p-8 hover:bg-slate-800 hover:border-white/30 transition-all hover:shadow-2xl hover:shadow-indigo-500/20 active:scale-95 overflow-hidden"
+              className="group relative bg-slate-900 border border-white/10 rounded-3xl p-4 sm:p-8 hover:bg-slate-800 hover:border-white/30 transition-all hover:shadow-2xl hover:shadow-indigo-500/20 active:scale-95 overflow-hidden transform scale-90 sm:scale-100 origin-top hover:scale-95 sm:hover:scale-105"
             >
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <span className="text-6xl font-black">#{pkmn.id}</span>
@@ -81,20 +86,20 @@ export default function DraftScreen({ onSelect, title = "Scegli il tuo Starter",
               <PokemonSprite 
                 id={pkmn.id} 
                 name={pkmn.name} 
-                className="w-48 h-48 mx-auto mb-6 drop-shadow-2xl group-hover:scale-110 transition-transform"
+                className="w-32 sm:w-48 h-32 sm:h-48 mx-auto mb-4 sm:mb-6 drop-shadow-2xl group-hover:scale-110 transition-transform"
               />
               
-              <h2 className="text-2xl font-bold mb-2">{pkmn.name}</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">{pkmn.name}</h2>
               
-              <div className="flex gap-2 mb-4 justify-center">
+              <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4 justify-center flex-wrap">
                 {pkmn.types.map(t => (
-                  <span key={t} className="text-[10px] uppercase font-bold bg-slate-800 px-3 py-1 rounded-full border border-white/5">
+                  <span key={t} className="text-[8px] sm:text-[10px] uppercase font-bold bg-slate-800 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/5">
                     {t}
                   </span>
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-400 text-left border-t border-white/5 pt-4">
+              <div className="grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-0.5 sm:gap-y-1 text-[10px] sm:text-xs text-slate-400 text-left border-t border-white/5 pt-2 sm:pt-4">
                 {renderStat('HP', stats.hp)}
                 {renderStat('SPD', stats.speed)}
                 {renderStat('ATK', stats.attack)}
@@ -105,6 +110,7 @@ export default function DraftScreen({ onSelect, title = "Scegli il tuo Starter",
             </motion.button>
           );
         })}
+        </div>
       </div>
     </div>
   );

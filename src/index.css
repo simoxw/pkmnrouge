@@ -7,10 +7,15 @@
     image-rendering: crisp-edges;
   }
 
-  /* Mobile viewport height fix */
-  .h-screen-safe {
-    height: 100dvh;
-    height: 100vh;
+  /* Smooth scrolling on mobile without momentum bounce issues */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hide scrollbar on Firefox */
+    overscroll-behavior: contain; /* Prevent rubber-band scrolling */
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    display: none; /* Hide scrollbar on Chrome/Safari */
   }
 
   /* Portrait-only warning overlay */
