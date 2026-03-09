@@ -63,6 +63,14 @@ export interface BattlePokemon extends Pokemon {
   level: number;
   status: StatusCondition | null;
   sleepTurns?: number;
+  statStages?: {
+    hp: number;
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  };
 }
 
 export interface BattleLog {

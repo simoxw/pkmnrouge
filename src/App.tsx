@@ -53,7 +53,15 @@ export default function App() {
       currentHp: actualStats.hp,
       maxHp: actualStats.hp,
       level: 50,
-      status: null
+      status: null,
+      statStages: {
+        hp: 0,
+        attack: 0,
+        defense: 0,
+        spAtk: 0,
+        spDef: 0,
+        speed: 0
+      }
     };
 
     if (gameState === 'DRAFT') {
@@ -113,7 +121,15 @@ export default function App() {
           currentHp: maxHp,
           maxHp: maxHp,
           level: enemyLevel,
-          status: null
+          status: null,
+          statStages: {
+            hp: 0,
+            attack: 0,
+            defense: 0,
+            spAtk: 0,
+            spDef: 0,
+            speed: 0
+          }
         };
       }));
 

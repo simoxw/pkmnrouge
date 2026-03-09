@@ -4,6 +4,7 @@ import { calculateDamage } from '../utils/battleMechanics';
 import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import PokemonSprite from './PokemonSprite';
+import StatStagesBadges from './StatStagesBadges';
 import { Briefcase } from 'lucide-react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 
@@ -18,9 +19,17 @@ interface BattleEngineProps {
 }
 
 export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, onBattleEnd, onSwitch, onUseItem }: BattleEngineProps) {
-  const [player, setPlayer] = useState<BattlePokemon>({ ...initialPlayer, status: initialPlayer.status || null });
+  const [player, setPlayer] = useState<BattlePokemon>({
+    ...initialPlayer,
+    status: initialPlayer.status || null,
+    statStages: initialPlayer.statStages || { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+  });
   const [enemyIndex, setEnemyIndex] = useState(0);
-  const [enemy, setEnemy] = useState<BattlePokemon>({ ...enemyTeam[0], status: enemyTeam[0].status || null });
+  const [enemy, setEnemy] = useState<BattlePokemon>({
+    ...enemyTeam[0],
+    status: enemyTeam[0].status || null,
+    statStages: enemyTeam[0].statStages || { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+  });
   const [logs, setLogs] = useState<BattleLog[]>([]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemyTeam[0].actualStats.speed);
   const [isBattleOver, setIsBattleOver] = useState(false);
@@ -203,7 +212,11 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       if (enemyIndex < enemyTeam.length - 1) {
         addLog(`${enemy.name} nemico è esausto!`, 'status');
         const nextIndex = enemyIndex + 1;
-        const nextEnemy = { ...enemyTeam[nextIndex], status: null };
+        const nextEnemy = { 
+          ...enemyTeam[nextIndex], 
+          status: null,
+          statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+        };
         setEnemyIndex(nextIndex);
         setEnemy(nextEnemy);
         addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
@@ -364,15 +377,20 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
     let newPlayerStats = { ...player.actualStats };
     let newEnemyStats = { ...enemy.actualStats };
+    let newPlayerStages = { ...player.statStages };
+    let newEnemyStages = { ...enemy.statStages };
+    
     if (move.statChanges) {
       move.statChanges.forEach(sc => {
         const multiplier = sc.change > 0 ? 1.5 : 0.66;
         if (move.target === 'user') {
           newEnemyStats[sc.stat] = Math.floor(newEnemyStats[sc.stat] * multiplier);
+          newEnemyStages[sc.stat] = Math.max(-6, Math.min(6, (newEnemyStages[sc.stat] || 0) + sc.change));
           addLog(`La ${sc.stat} di ${enemy.name} nemico è ${sc.change > 0 ? 'aumentata' : 'diminuita'}!`, 'status');
           triggerEffect('status', 'enemy', `${sc.stat.toUpperCase()} ${sc.change > 0 ? '↑' : '↓'}`);
         } else {
           newPlayerStats[sc.stat] = Math.floor(newPlayerStats[sc.stat] * multiplier);
+          newPlayerStages[sc.stat] = Math.max(-6, Math.min(6, (newPlayerStages[sc.stat] || 0) + sc.change));
           addLog(`La ${sc.stat} di ${player.name} è ${sc.change > 0 ? 'aumentata' : 'diminuita'}!`, 'status');
           triggerEffect('status', 'player', `${sc.stat.toUpperCase()} ${sc.change > 0 ? '↑' : '↓'}`);
         }
@@ -384,6 +402,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       currentHp: newPlayerHp, 
       status: newPlayerStatus,
       actualStats: newPlayerStats,
+      statStages: newPlayerStages,
       sleepTurns: newPlayerStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
 
@@ -391,6 +410,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       ...prev,
       status: newEnemyStatus,
       actualStats: newEnemyStats,
+      statStages: newEnemyStages,
       sleepTurns: newEnemyStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
 
@@ -455,7 +475,11 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       if (enemyIndex < enemyTeam.length - 1) {
         addLog(`${enemy.name} nemico è esausto per lo stato!`, 'status');
         const nextIndex = enemyIndex + 1;
-        const nextEnemy = { ...enemyTeam[nextIndex], status: null };
+        const nextEnemy = { 
+          ...enemyTeam[nextIndex], 
+          status: null,
+          statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+        };
         setEnemyIndex(nextIndex);
         setEnemy(nextEnemy);
         addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
@@ -481,9 +505,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   return (
     <div className="flex flex-col h-full bg-slate-900 text-white p-4 font-sans">
       {/* Battle Arena */}
-      <div className="flex-1 flex flex-col justify-around relative overflow-hidden">
+      <div className="flex-1 flex flex-col justify-start md:justify-around relative overflow-hidden">
         {/* Enemy Side */}
-        <div className="flex justify-end items-start p-4 relative">
+        <div className="flex justify-end items-start p-2 md:p-4 relative">
           {activeEffect?.side === 'enemy' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -514,7 +538,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
           <motion.div 
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="bg-slate-800/80 p-4 rounded-2xl border border-white/10 w-64 shadow-xl"
+            className="bg-slate-800/80 p-3 md:p-4 rounded-2xl border border-white/10 w-56 md:w-64 shadow-xl text-sm md:text-base"
           >
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
@@ -554,6 +578,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <div className="text-right text-xs mt-1 font-mono">
               {enemy.currentHp} / {enemy.maxHp} HP
             </div>
+            <StatStagesBadges pokemon={enemy} />
           </motion.div>
           <motion.div
             animate={!isPlayerTurn ? { x: [-5, 5, -5] } : (activeEffect?.side === 'enemy' ? { x: [0, -10, 10, -10, 0], filter: ['brightness(1)', 'brightness(2)', 'brightness(1)'] } : {})}
@@ -562,13 +587,13 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <PokemonSprite 
               id={enemy.id} 
               name={enemy.name} 
-              className="w-32 h-32 ml-4"
+              className="w-20 h-20 md:w-32 md:h-32 ml-2 md:ml-4"
             />
           </motion.div>
         </div>
 
         {/* Player Side */}
-        <div className="flex justify-start items-end p-4 relative">
+        <div className="flex justify-start items-end p-2 md:p-4 relative mt-auto md:mt-0 md:self-auto">
           {activeEffect?.side === 'player' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -603,13 +628,13 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               id={player.id} 
               name={player.name} 
               isBack={true}
-              className="w-48 h-48 mr-4"
+              className="w-24 h-24 md:w-48 md:h-48 mr-2 md:mr-4"
             />
           </motion.div>
           <motion.div 
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="bg-slate-800/80 p-4 rounded-2xl border border-white/10 w-64 shadow-xl"
+            className="bg-slate-800/80 p-3 md:p-4 rounded-2xl border border-white/10 w-56 md:w-64 shadow-xl text-xs md:text-base"
           >
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-2">
@@ -637,6 +662,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <div className="text-right text-xs mt-1 font-mono">
               {player.currentHp} / {player.maxHp} HP
             </div>
+            <StatStagesBadges pokemon={player} />
             
             {/* Party Status */}
             <div className="mt-3 pt-2 border-t border-white/5 flex gap-1.5">
@@ -659,14 +685,14 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       </div>
 
       {/* Controls & Logs */}
-      <div className="h-64 bg-slate-950 rounded-t-3xl p-6 border-t border-white/10 flex flex-col md:flex-row gap-6">
+      <div className="h-auto md:h-64 bg-slate-950 rounded-t-3xl p-4 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-4 md:gap-6 overflow-y-auto md:overflow-y-visible">
         {/* Moves Grid */}
         <div className="flex-1 grid grid-cols-2 gap-3 relative">
           {hoveredMove && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute bottom-full left-0 right-0 mb-4 bg-slate-800 border border-indigo-500/30 p-3 rounded-xl shadow-2xl z-20 pointer-events-none"
+              className="absolute bottom-full left-0 right-0 mb-2 md:mb-4 bg-slate-800 border border-indigo-500/30 p-2 md:p-3 rounded-xl shadow-2xl z-20 pointer-events-none text-[10px] md:text-sm"
             >
               <div className="flex justify-between items-center mb-1">
                 <span className="font-bold text-indigo-300 uppercase text-xs">{hoveredMove.name}</span>
@@ -702,8 +728,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                   ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-95' 
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
-              <span className="font-bold uppercase tracking-wider text-sm">{move.name}</span>
-              <div className="flex items-center gap-2 text-[10px] opacity-60">
+              <span className="font-bold uppercase tracking-wider text-xs md:text-sm">{move.name}</span>
+              <div className="flex items-center gap-2 text-[9px] md:text-[10px] opacity-60">
                 <span className="bg-slate-700 px-2 py-0.5 rounded uppercase">{move.type}</span>
                 <span>PWR: {move.power}</span>
               </div>
@@ -860,7 +886,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         </AnimatePresence>
 
         {/* Battle Log */}
-        <div className="w-full md:w-80 bg-black/40 rounded-xl p-4 overflow-y-auto border border-white/5">
+        <div className="hidden md:flex w-80 bg-black/40 rounded-xl p-4 overflow-y-auto border border-white/5 flex-col">
           <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 font-bold">Battle Log</div>
           <div className="space-y-2">
             <AnimatePresence initial={false}>
