@@ -162,14 +162,15 @@ export default function App() {
       
       // Level Up
       const oldLevel = activePkmn.level;
-      const newLevel = oldLevel + 1;
+      const newLevel = Math.min(100, oldLevel + 1);
       activePkmn = updateStats(activePkmn, newLevel);
+      updatedParty[0] = activePkmn; // Assign the updated Pokémon back
       
-      // Heal 30%
-      const healAmount = Math.floor(activePkmn.maxHp * 0.3);
-      activePkmn.currentHp = Math.min(activePkmn.maxHp, activePkmn.currentHp + healAmount);
+      // Heal ALL Pokémon to full HP when advancing to next room
+      updatedParty.forEach((pkmn, i) => {
+        updatedParty[i] = { ...pkmn, currentHp: pkmn.maxHp };
+      });
       
-      updatedParty[0] = activePkmn;
       setParty(updatedParty);
 
       // Move Learning every 5 levels

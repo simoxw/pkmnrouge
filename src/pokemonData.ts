@@ -1,16 +1,16 @@
 import { Pokemon, Type, Move } from './types';
 
 export const GEN4_MOVES: Record<string, Move> = {
-  TACKLE: { id: 'tackle', name: 'Azione', type: Type.NORMAL, power: 40, accuracy: 100, pp: 35 },
-  RAZOR_LEAF: { id: 'razor_leaf', name: 'Fogliama', type: Type.GRASS, power: 55, accuracy: 95, pp: 25 },
-  EMBER: { id: 'ember', name: 'Braciere', type: Type.FIRE, power: 40, accuracy: 100, pp: 25 },
-  WATER_GUN: { id: 'water_gun', name: 'Pistolacqua', type: Type.WATER, power: 40, accuracy: 100, pp: 25 },
-  QUICK_ATTACK: { id: 'quick_attack', name: 'Attacco Rapido', type: Type.NORMAL, power: 40, accuracy: 100, pp: 30 },
-  BUBBLE: { id: 'bubble', name: 'Bolla', type: Type.WATER, power: 20, accuracy: 100, pp: 30 },
-  SCRATCH: { id: 'scratch', name: 'Graffio', type: Type.NORMAL, power: 40, accuracy: 100, pp: 35 },
-  PECK: { id: 'peck', name: 'Beccata', type: Type.FLYING, power: 35, accuracy: 100, pp: 35 },
-  LEAF_STORM: { id: 'leaf_storm', name: 'Verdebufera', type: Type.GRASS, power: 130, accuracy: 90, pp: 5 },
-  FLAME_WHEEL: { id: 'flame_wheel', name: 'Ruotafuoco', type: Type.FIRE, power: 60, accuracy: 100, pp: 25 },
+  TACKLE: { id: 'tackle', name: 'Azione', type: Type.NORMAL, power: 40, accuracy: 100, pp: 35, damageClass: 'physical' },
+  RAZOR_LEAF: { id: 'razor_leaf', name: 'Fogliama', type: Type.GRASS, power: 55, accuracy: 95, pp: 25, damageClass: 'physical' },
+  EMBER: { id: 'ember', name: 'Braciere', type: Type.FIRE, power: 40, accuracy: 100, pp: 25, damageClass: 'special' },
+  WATER_GUN: { id: 'water_gun', name: 'Pistolacqua', type: Type.WATER, power: 40, accuracy: 100, pp: 25, damageClass: 'special' },
+  QUICK_ATTACK: { id: 'quick_attack', name: 'Attacco Rapido', type: Type.NORMAL, power: 40, accuracy: 100, pp: 30, damageClass: 'physical' },
+  BUBBLE: { id: 'bubble', name: 'Bolla', type: Type.WATER, power: 20, accuracy: 100, pp: 30, damageClass: 'special' },
+  SCRATCH: { id: 'scratch', name: 'Graffio', type: Type.NORMAL, power: 40, accuracy: 100, pp: 35, damageClass: 'physical' },
+  PECK: { id: 'peck', name: 'Beccata', type: Type.FLYING, power: 35, accuracy: 100, pp: 35, damageClass: 'physical' },
+  LEAF_STORM: { id: 'leaf_storm', name: 'Verdebufera', type: Type.GRASS, power: 130, accuracy: 90, pp: 5, damageClass: 'special' },
+  FLAME_WHEEL: { id: 'flame_wheel', name: 'Ruotafuoco', type: Type.FIRE, power: 60, accuracy: 100, pp: 25, damageClass: 'physical' },
 };
 
 export const POKEMON_DATABASE: Pokemon[] = [
