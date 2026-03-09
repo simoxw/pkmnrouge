@@ -503,11 +503,11 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-white p-4 font-sans">
+    <div className="flex flex-col h-full bg-slate-900 text-white p-2 md:p-4 font-sans">
       {/* Battle Arena */}
-      <div className="flex-1 flex flex-col justify-start md:justify-around relative overflow-hidden">
+      <div className="flex-1 flex flex-col justify-start md:justify-around relative overflow-hidden gap-1 md:gap-4">
         {/* Enemy Side */}
-        <div className="flex justify-end items-start p-2 md:p-4 relative">
+        <div className="flex justify-end items-start p-1 md:p-4 relative">
           {activeEffect?.side === 'enemy' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -538,13 +538,13 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
           <motion.div 
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="bg-slate-800/80 p-3 md:p-4 rounded-2xl border border-white/10 w-56 md:w-64 shadow-xl text-sm md:text-base"
+            className="bg-slate-800/80 p-2 md:p-4 rounded-2xl border border-white/10 w-52 md:w-64 shadow-xl text-xs md:text-base"
           >
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg">{enemy.name}</span>
+            <div className="flex justify-between items-start mb-1">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="font-bold text-base md:text-lg truncate">{enemy.name}</span>
                 {enemy.status && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold text-white
+                  <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
                     ${enemy.status === 'PAR' ? 'bg-amber-400' : 
                       enemy.status === 'BRN' ? 'bg-rose-500' :
                       enemy.status === 'PSN' ? 'bg-purple-500' :
@@ -554,28 +554,28 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                   </span>
                 )}
               </div>
-              <div className="flex flex-col items-end">
-                <span className="text-xs opacity-60">Lv. {enemy.level || 50}</span>
+              <div className="flex flex-col items-end text-right">
+                <span className="text-[10px] md:text-xs opacity-60">Lv. {enemy.level || 50}</span>
                 {enemyTeam.length > 1 && (
-                  <div className="flex gap-0.5 mt-1">
+                  <div className="flex gap-0.5 mt-0.5">
                     {enemyTeam.map((_, i) => (
                       <div 
                         key={i} 
-                        className={`w-1.5 h-1.5 rounded-full ${i === enemyIndex ? 'bg-rose-500' : i < enemyIndex ? 'bg-slate-600' : 'bg-slate-400/30'}`} 
+                        className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${i === enemyIndex ? 'bg-rose-500' : i < enemyIndex ? 'bg-slate-600' : 'bg-slate-400/30'}`} 
                       />
                     ))}
                   </div>
                 )}
               </div>
             </div>
-            <div className="h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
+            <div className="h-2 md:h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
               <motion.div 
                 className={`h-full transition-colors duration-500 ${getHealthColor(enemy.currentHp, enemy.maxHp)}`}
                 initial={{ width: '100%' }}
                 animate={{ width: `${(enemy.currentHp / enemy.maxHp) * 100}%` }}
               />
             </div>
-            <div className="text-right text-xs mt-1 font-mono">
+            <div className="text-right text-[10px] md:text-xs mt-0.5 md:mt-1 font-mono">
               {enemy.currentHp} / {enemy.maxHp} HP
             </div>
             <StatStagesBadges pokemon={enemy} />
@@ -587,13 +587,13 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <PokemonSprite 
               id={enemy.id} 
               name={enemy.name} 
-              className="w-20 h-20 md:w-32 md:h-32 ml-2 md:ml-4"
+              className="w-16 h-16 md:w-32 md:h-32 ml-1 md:ml-4"
             />
           </motion.div>
         </div>
 
         {/* Player Side */}
-        <div className="flex justify-start items-end p-2 md:p-4 relative mt-auto md:mt-0 md:self-auto">
+        <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4">
           {activeEffect?.side === 'player' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -628,19 +628,19 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               id={player.id} 
               name={player.name} 
               isBack={true}
-              className="w-24 h-24 md:w-48 md:h-48 mr-2 md:mr-4"
+              className="w-20 h-20 md:w-48 md:h-48 mr-1 md:mr-4"
             />
           </motion.div>
           <motion.div 
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="bg-slate-800/80 p-3 md:p-4 rounded-2xl border border-white/10 w-56 md:w-64 shadow-xl text-xs md:text-base"
+            className="bg-slate-800/80 p-2 md:p-4 rounded-2xl border border-white/10 w-52 md:w-64 shadow-xl text-xs md:text-base"
           >
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg">{player.name}</span>
+            <div className="flex justify-between items-start mb-1">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="font-bold text-base md:text-lg truncate">{player.name}</span>
                 {player.status && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold text-white
+                  <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
                     ${player.status === 'PAR' ? 'bg-amber-400' : 
                       player.status === 'BRN' ? 'bg-rose-500' :
                       player.status === 'PSN' ? 'bg-purple-500' :
@@ -650,26 +650,26 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                   </span>
                 )}
               </div>
-              <span className="text-xs opacity-60">Lv. {player.level}</span>
+              <span className="text-[10px] md:text-xs opacity-60">Lv. {player.level}</span>
             </div>
-            <div className="h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
+            <div className="h-2 md:h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
               <motion.div 
                 className={`h-full transition-colors duration-500 ${getHealthColor(player.currentHp, player.maxHp)}`}
                 initial={{ width: '100%' }}
                 animate={{ width: `${(player.currentHp / player.maxHp) * 100}%` }}
               />
             </div>
-            <div className="text-right text-xs mt-1 font-mono">
+            <div className="text-right text-[10px] md:text-xs mt-0.5 md:mt-1 font-mono">
               {player.currentHp} / {player.maxHp} HP
             </div>
             <StatStagesBadges pokemon={player} />
             
             {/* Party Status */}
-            <div className="mt-3 pt-2 border-t border-white/5 flex gap-1.5">
+            <div className="mt-1.5 md:mt-3 pt-1 md:pt-2 border-t border-white/5 flex gap-1">
               {party.map((member, i) => (
                 <div 
                   key={member.id + i}
-                  className={`w-2 h-2 rounded-full ${
+                  className={`w-1.5 md:w-2 h-1.5 md:h-2 rounded-full ${
                     i === 0 ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 
                     member.currentHp > 0 ? 'bg-emerald-500/50' : 'bg-rose-500/30'
                   }`}
@@ -685,31 +685,33 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       </div>
 
       {/* Controls & Logs */}
-      <div className="h-auto md:h-64 bg-slate-950 rounded-t-3xl p-4 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-4 md:gap-6 overflow-y-auto md:overflow-y-visible">
+      <div className="h-auto md:h-64 bg-slate-950 rounded-t-3xl p-3 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-3 md:gap-6 overflow-y-auto md:overflow-y-visible">
         {/* Moves Grid */}
-        <div className="flex-1 grid grid-cols-2 gap-3 relative">
+        <div className="flex-1 grid grid-cols-2 gap-2 relative z-40">
           {hoveredMove && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute bottom-full left-0 right-0 mb-2 md:mb-4 bg-slate-800 border border-indigo-500/30 p-2 md:p-3 rounded-xl shadow-2xl z-20 pointer-events-none text-[10px] md:text-sm"
+              className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
             >
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-bold text-indigo-300 uppercase text-xs">{hoveredMove.name}</span>
-                <span className="bg-slate-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold">{hoveredMove.type}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
-                <div className="flex flex-col">
-                  <span className="opacity-50 uppercase">Potenza</span>
-                  <span className="font-bold text-white">{hoveredMove.power || '--'}</span>
+              <div className="bg-slate-800 border border-indigo-500/30 p-2 md:p-3 rounded-xl shadow-2xl text-[10px] md:text-sm max-w-xs">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="font-bold text-indigo-300 uppercase text-[10px] md:text-xs">{hoveredMove.name}</span>
+                  <span className="bg-slate-700 px-1.5 py-0.5 rounded text-[8px] md:text-[10px] uppercase font-bold">{hoveredMove.type}</span>
                 </div>
-                <div className="flex flex-col">
-                  <span className="opacity-50 uppercase">Precisione</span>
-                  <span className="font-bold text-white">{hoveredMove.accuracy}%</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="opacity-50 uppercase">Classe</span>
-                  <span className="font-bold text-white uppercase">{hoveredMove.damageClass}</span>
+                <div className="grid grid-cols-3 gap-1 text-[8px] md:text-[9px] font-mono">
+                  <div className="flex flex-col">
+                    <span className="opacity-50 uppercase text-[7px]">Potenza</span>
+                    <span className="font-bold text-white">{hoveredMove.power || '--'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="opacity-50 uppercase text-[7px]">Precisione</span>
+                    <span className="font-bold text-white">{hoveredMove.accuracy}%</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="opacity-50 uppercase text-[7px]">Classe</span>
+                    <span className="font-bold text-white uppercase text-[7px]">{hoveredMove.damageClass?.slice(0, 3)}</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -723,14 +725,14 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               onTouchStart={() => setHoveredMove(move)}
               onTouchEnd={() => setHoveredMove(null)}
               disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu}
-              className={`p-4 rounded-xl border transition-all flex flex-col items-start gap-1 group
+              className={`p-3 rounded-xl border transition-all flex flex-col items-start gap-1 group text-[11px]
                 ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu
                   ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-95' 
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
               <span className="font-bold uppercase tracking-wider text-xs md:text-sm">{move.name}</span>
-              <div className="flex items-center gap-2 text-[9px] md:text-[10px] opacity-60">
-                <span className="bg-slate-700 px-2 py-0.5 rounded uppercase">{move.type}</span>
+              <div className="flex items-center gap-1 text-[9px] md:text-[10px] opacity-60">
+                <span className="bg-slate-700 px-1.5 py-0.5 rounded uppercase text-[8px]">{move.type}</span>
                 <span>PWR: {move.power}</span>
               </div>
             </button>
@@ -740,24 +742,24 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
           <button
             onClick={() => setShowSwitchMenu(true)}
             disabled={!isPlayerTurn || isBattleOver || party.length <= 1 || showBagMenu}
-            className={`p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-xs
+            className={`p-2 md:p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-[10px] md:text-xs
               ${isPlayerTurn && !isBattleOver && party.length > 1 && !showBagMenu
                 ? 'bg-indigo-600/20 border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/30 hover:border-indigo-500/50'
                 : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
           >
-            Cambia Pokémon
+            Cambia
           </button>
 
           {/* Bag Button */}
           <button
             onClick={() => setShowBagMenu(true)}
             disabled={!isPlayerTurn || isBattleOver || inventory.length === 0 || showSwitchMenu}
-            className={`p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2
+            className={`p-2 md:p-3 rounded-xl border transition-all font-bold uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-center gap-1
               ${isPlayerTurn && !isBattleOver && inventory.length > 0 && !showSwitchMenu
                 ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400 hover:bg-emerald-600/30 hover:border-emerald-500/50'
                 : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
           >
-            <Briefcase size={14} />
+            <Briefcase size={12} />
             Zaino
           </button>
         </div>
