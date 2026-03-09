@@ -11,6 +11,19 @@ export const GEN4_MOVES: Record<string, Move> = {
   PECK: { id: 'peck', name: 'Beccata', type: Type.FLYING, power: 35, accuracy: 100, pp: 35, damageClass: 'physical' },
   LEAF_STORM: { id: 'leaf_storm', name: 'Verdebufera', type: Type.GRASS, power: 130, accuracy: 90, pp: 5, damageClass: 'special' },
   FLAME_WHEEL: { id: 'flame_wheel', name: 'Ruotafuoco', type: Type.FIRE, power: 60, accuracy: 100, pp: 25, damageClass: 'physical' },
+  // Status moves
+  REST: { id: 'rest', name: 'Riposo', type: Type.PSYCHIC, power: 0, accuracy: 100, pp: 10, damageClass: 'status', target: 'user' },
+  SWORDS_DANCE: { id: 'swords_dance', name: 'Danzaspada', type: Type.NORMAL, power: 0, accuracy: 100, pp: 20, damageClass: 'status', target: 'user', statChanges: [{ stat: 'attack', change: 2 }] },
+  THUNDER_WAVE: { id: 'thunder_wave', name: 'Tuononda', type: Type.ELECTRIC, power: 0, accuracy: 100, pp: 20, damageClass: 'status', ailment: 'paralysis' },
+  TOXIC: { id: 'toxic', name: 'Tossina', type: Type.POISON, power: 0, accuracy: 90, pp: 10, damageClass: 'status', ailment: 'poison' },
+  WILL_O_WISP: { id: 'will_o_wisp', name: 'Fuocofatuo', type: Type.FIRE, power: 0, accuracy: 85, pp: 15, damageClass: 'status', ailment: 'burn' },
+  // Damage + Status moves
+  THUNDERBOLT: { id: 'thunderbolt', name: 'Fulmine', type: Type.ELECTRIC, power: 90, accuracy: 100, pp: 15, damageClass: 'special', ailment: 'paralysis', ailmentChance: 10 },
+  FLAMETHROWER: { id: 'flamethrower', name: 'Lanciafiamme', type: Type.FIRE, power: 90, accuracy: 100, pp: 15, damageClass: 'special', ailment: 'burn', ailmentChance: 10 },
+  ICE_BEAM: { id: 'ice_beam', name: 'Geloraggio', type: Type.ICE, power: 90, accuracy: 100, pp: 10, damageClass: 'special', ailment: 'freeze', ailmentChance: 10 },
+  // Damage + Debuff moves
+  BUBBLE_BEAM: { id: 'bubble_beam', name: 'Bollaraggio', type: Type.WATER, power: 65, accuracy: 100, pp: 20, damageClass: 'special', statChanges: [{ stat: 'speed', change: -1 }], ailmentChance: 10 },
+  PSYCHIC: { id: 'psychic', name: 'Psichico', type: Type.PSYCHIC, power: 90, accuracy: 100, pp: 10, damageClass: 'special', statChanges: [{ stat: 'spDef', change: -1 }], ailmentChance: 10 },
 };
 
 export const POKEMON_DATABASE: Pokemon[] = [
@@ -46,7 +59,7 @@ export const POKEMON_DATABASE: Pokemon[] = [
     name: 'Chimchar',
     types: [Type.FIRE],
     baseStats: { hp: 44, attack: 58, defense: 44, spAtk: 58, spDef: 44, speed: 61 },
-    moves: [GEN4_MOVES.SCRATCH, GEN4_MOVES.EMBER, GEN4_MOVES.QUICK_ATTACK, GEN4_MOVES.TACKLE],
+    moves: [GEN4_MOVES.SCRATCH, GEN4_MOVES.EMBER, GEN4_MOVES.WILL_O_WISP, GEN4_MOVES.FLAMETHROWER],
     ability: 'Aiutofuoco',
     spriteUrl: ''
   },
