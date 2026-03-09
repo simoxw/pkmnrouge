@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BattlePokemon, Move, BattleLog, InventoryItem } from '../types';
 import { calculateDamage } from '../utils/battleMechanics';
+import { getTypeEffectiveness } from '../battleLogic';
 import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import PokemonSprite from './PokemonSprite';
@@ -38,6 +39,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   const [selectedItemForPokemon, setSelectedItemForPokemon] = useState<string | null>(null);
   const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy', text?: string } | null>(null);
   const [hoveredMove, setHoveredMove] = useState<Move | null>(null);
+  const [lastEnemyMove, setLastEnemyMove] = useState<Move | null>(null);
 
   // sound effects
   const { playSound } = useSoundEffects(true);
@@ -219,6 +221,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         };
         setEnemyIndex(nextIndex);
         setEnemy(nextEnemy);
+        setLastEnemyMove(null); // Reset last move when enemy changes
         addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
         playCry(nextEnemy.cryUrl);
         setIsPlayerTurn(false); // Enemy switch takes turn or just gives initiative to player? Usually player continues if they outspeed.
@@ -308,7 +311,27 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       return;
     }
 
-    const move = enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
+    // Improved AI: Prefer moves that are super effective against player
+    const availableMoves = enemy.moves.filter(m => m.power > 0); // Only damaging moves for simplicity
+    let movePool: Move[] = [];
+    
+    availableMoves.forEach(move => {
+      let effectiveness = 1;
+      player.types.forEach(type => {
+        effectiveness *= getTypeEffectiveness(move.type, type);
+      });
+      
+      // Weight: super effective moves get 3x chance, normal 1x, not very effective 0.5x
+      const weight = effectiveness > 1 ? 3 : effectiveness < 1 ? 0.5 : 1;
+      for (let i = 0; i < weight; i++) {
+        movePool.push(move);
+      }
+    });
+    
+    // If no moves available (shouldn't happen), fallback to random
+    const move = movePool.length > 0 ? movePool[Math.floor(Math.random() * movePool.length)] : enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
+    
+    setLastEnemyMove(move);
     const { damage, effectiveness, isCritical, isMiss } = calculateDamage(enemy, player, move);
     
     if (isMiss) {
@@ -591,6 +614,19 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             />
           </motion.div>
         </div>
+
+        {/* Last Move Indicator */}
+        {lastEnemyMove && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex justify-center items-center py-2"
+          >
+            <div className="text-center text-xs md:text-sm font-bold text-indigo-300 bg-slate-800/60 px-4 py-2 rounded-lg border border-indigo-500/30">
+              Ultima mossa nemico: <span className="text-indigo-400">{lastEnemyMove.name}</span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Player Side */}
         <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4">
