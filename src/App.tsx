@@ -16,7 +16,7 @@ const SAVE_KEY = 'poke_rogue_save';
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('DRAFT');
   const [party, setParty] = useState<BattlePokemon[]>([]);
-  const [enemyPokemon, setEnemyPokemon] = useState<BattlePokemon | null>(null);
+  const [enemyTeam, setEnemyTeam] = useState<BattlePokemon[]>([]);
   const [roomNumber, setRoomNumber] = useState(1);
   const [money, setMoney] = useState(100); // Start with 100 money
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -108,35 +108,41 @@ export default function App() {
   const startBattle = async () => {
     setLoading(true);
     try {
-      let enemyId: number;
       const isBossRoom = BOSS_ENCOUNTERS[roomNumber];
-      
-      if (isBossRoom) {
-        enemyId = isBossRoom[Math.floor(Math.random() * isBossRoom.length)];
-      } else {
-        enemyId = Math.floor(Math.random() * 493) + 1;
-      }
-
-      const enemyData = await fetchPokemonData(enemyId);
-      
-      // Level scaling: +5 levels for every 10 rooms
       const scalingFactor = Math.floor((roomNumber - 1) / 10);
       const enemyLevel = 50 + (scalingFactor * 5);
       
-      const actualStats = getActualStats(enemyData.baseStats, enemyLevel);
+      let enemiesToFetch: number[] = [];
       
-      // Boss have a multiplier on HP
-      const hpMultiplier = isBossRoom ? 1.5 : 1;
-      const maxHp = Math.floor(actualStats.hp * hpMultiplier);
+      if (isBossRoom) {
+        // Boss team size: 1 at room 10, 2 at room 20, ..., 6 at room 60+
+        const teamSize = Math.min(6, Math.floor(roomNumber / 10));
+        
+        // Pick 'teamSize' random IDs from the boss encounter list for this room
+        for (let i = 0; i < teamSize; i++) {
+          enemiesToFetch.push(isBossRoom[Math.floor(Math.random() * isBossRoom.length)]);
+        }
+      } else {
+        enemiesToFetch = [Math.floor(Math.random() * 493) + 1];
+      }
 
-      setEnemyPokemon({
-        ...enemyData,
-        actualStats,
-        currentHp: maxHp,
-        maxHp: maxHp,
-        level: enemyLevel,
-        status: null
-      });
+      const fetchedEnemies = await Promise.all(enemiesToFetch.map(async (id) => {
+        const enemyData = await fetchPokemonData(id);
+        const actualStats = getActualStats(enemyData.baseStats, enemyLevel);
+        const hpMultiplier = isBossRoom ? 1.5 : 1;
+        const maxHp = Math.floor(actualStats.hp * hpMultiplier);
+        
+        return {
+          ...enemyData,
+          actualStats,
+          currentHp: maxHp,
+          maxHp: maxHp,
+          level: enemyLevel,
+          status: null
+        };
+      }));
+
+      setEnemyTeam(fetchedEnemies);
       setGameState('BATTLE');
     } catch (error) {
       console.error("Failed to start battle:", error);
@@ -195,6 +201,10 @@ export default function App() {
       }
 
       const nextRoom = roomNumber + 1;
+      if (nextRoom > 100) {
+        setGameState('GAME_OVER'); // We'll use GAME_OVER state but with a victory message
+        return;
+      }
       setRoomNumber(nextRoom);
 
       // Check for Recruitment (Boss floors 10, 20, 30, 40, 50, or every boss after 60)
@@ -226,6 +236,10 @@ export default function App() {
     
     // Continue to next state
     const nextRoom = roomNumber + 1;
+    if (nextRoom > 100) {
+      setGameState('GAME_OVER');
+      return;
+    }
     setRoomNumber(nextRoom);
     
     const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
@@ -242,7 +256,7 @@ export default function App() {
     setMoney(100);
     setInventory([]);
     setParty([]);
-    setEnemyPokemon(null);
+    setEnemyTeam([]);
     setPendingRecruit(null);
   };
 
@@ -369,10 +383,10 @@ export default function App() {
         </div>
       )}
 
-      {gameState === 'BATTLE' && party.length > 0 && enemyPokemon && (
+      {gameState === 'BATTLE' && party.length > 0 && enemyTeam.length > 0 && (
         <BattleEngine 
           playerPokemon={party[0]} 
-          enemyPokemon={enemyPokemon} 
+          enemyTeam={enemyTeam} 
           party={party}
           inventory={inventory}
           onBattleEnd={handleBattleEnd} 
@@ -437,14 +451,23 @@ export default function App() {
             animate={{ scale: 1, opacity: 1 }}
             className="text-center"
           >
-            <h1 className="text-6xl font-black text-rose-500 mb-4">GAME OVER</h1>
-            <p className="text-slate-400 mb-8">Sei arrivato alla stanza {roomNumber}</p>
+            {roomNumber > 100 ? (
+              <>
+                <h1 className="text-6xl font-black text-emerald-500 mb-4 italic uppercase">VITTORIA!</h1>
+                <p className="text-slate-400 mb-8">Hai completato la scalata delle 100 stanze! Sei il Campione!</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-6xl font-black text-rose-500 mb-4">GAME OVER</h1>
+                <p className="text-slate-400 mb-8">Sei arrivato alla stanza {roomNumber}</p>
+              </>
+            )}
             <button 
               onClick={restartGame}
-              className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-colors"
+              className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-colors mx-auto"
             >
               <RotateCcw size={20} />
-              Riprova
+              {roomNumber > 100 ? 'Nuova Scalata' : 'Riprova'}
             </button>
           </motion.div>
         </div>

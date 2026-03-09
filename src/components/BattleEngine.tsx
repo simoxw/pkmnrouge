@@ -8,7 +8,7 @@ import { Briefcase } from 'lucide-react';
 
 interface BattleEngineProps {
   playerPokemon: BattlePokemon;
-  enemyPokemon: BattlePokemon;
+  enemyTeam: BattlePokemon[];
   party: BattlePokemon[];
   inventory: InventoryItem[];
   onBattleEnd: (winner: 'player' | 'enemy') => void;
@@ -16,16 +16,18 @@ interface BattleEngineProps {
   onUseItem: (itemId: string, pokemonIndex: number) => string;
 }
 
-export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemon: initialEnemy, party, inventory, onBattleEnd, onSwitch, onUseItem }: BattleEngineProps) {
+export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, onBattleEnd, onSwitch, onUseItem }: BattleEngineProps) {
   const [player, setPlayer] = useState<BattlePokemon>({ ...initialPlayer, status: initialPlayer.status || null });
-  const [enemy, setEnemy] = useState<BattlePokemon>({ ...initialEnemy, status: initialEnemy.status || null });
+  const [enemyIndex, setEnemyIndex] = useState(0);
+  const [enemy, setEnemy] = useState<BattlePokemon>({ ...enemyTeam[0], status: enemyTeam[0].status || null });
   const [logs, setLogs] = useState<BattleLog[]>([]);
-  const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemy.actualStats.speed);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemyTeam[0].actualStats.speed);
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const [showBagMenu, setShowBagMenu] = useState(false);
   const [selectedItemForPokemon, setSelectedItemForPokemon] = useState<string | null>(null);
   const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy', text?: string } | null>(null);
+  const [hoveredMove, setHoveredMove] = useState<Move | null>(null);
 
   const triggerEffect = (type: string, side: 'player' | 'enemy', text?: string) => {
     setActiveEffect({ type, side, text });
@@ -161,9 +163,21 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
     }));
 
     if (newEnemyHp === 0) {
-      setIsBattleOver(true);
-      addLog(`${enemy.name} è esausto! Vittoria!`, 'victory');
-      setTimeout(() => onBattleEnd('player'), 2000);
+      if (enemyIndex < enemyTeam.length - 1) {
+        addLog(`${enemy.name} nemico è esausto!`, 'status');
+        const nextIndex = enemyIndex + 1;
+        const nextEnemy = { ...enemyTeam[nextIndex], status: null };
+        setEnemyIndex(nextIndex);
+        setEnemy(nextEnemy);
+        addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
+        playCry(nextEnemy.cryUrl);
+        setIsPlayerTurn(false); // Enemy switch takes turn or just gives initiative to player? Usually player continues if they outspeed.
+        // In many roguelikes, defeating one enemy in a wave ends your turn.
+      } else {
+        setIsBattleOver(true);
+        addLog(`${enemy.name} è esausto! Vittoria!`, 'victory');
+        setTimeout(() => onBattleEnd('player'), 2000);
+      }
     } else {
       setIsPlayerTurn(false);
     }
@@ -394,7 +408,19 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
                   </span>
                 )}
               </div>
-              <span className="text-xs opacity-60">Lv. {enemy.level || 50}</span>
+              <div className="flex flex-col items-end">
+                <span className="text-xs opacity-60">Lv. {enemy.level || 50}</span>
+                {enemyTeam.length > 1 && (
+                  <div className="flex gap-0.5 mt-1">
+                    {enemyTeam.map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`w-1.5 h-1.5 rounded-full ${i === enemyIndex ? 'bg-rose-500' : i < enemyIndex ? 'bg-slate-600' : 'bg-slate-400/30'}`} 
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
               <motion.div 
@@ -513,14 +539,44 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyPokemo
       {/* Controls & Logs */}
       <div className="h-64 bg-slate-950 rounded-t-3xl p-6 border-t border-white/10 flex flex-col md:flex-row gap-6">
         {/* Moves Grid */}
-        <div className="flex-1 grid grid-cols-2 gap-3">
+        <div className="flex-1 grid grid-cols-2 gap-3 relative">
+          {hoveredMove && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute bottom-full left-0 right-0 mb-4 bg-slate-800 border border-indigo-500/30 p-3 rounded-xl shadow-2xl z-20 pointer-events-none"
+            >
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-indigo-300 uppercase text-xs">{hoveredMove.name}</span>
+                <span className="bg-slate-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold">{hoveredMove.type}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
+                <div className="flex flex-col">
+                  <span className="opacity-50 uppercase">Potenza</span>
+                  <span className="font-bold text-white">{hoveredMove.power || '--'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="opacity-50 uppercase">Precisione</span>
+                  <span className="font-bold text-white">{hoveredMove.accuracy}%</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="opacity-50 uppercase">Classe</span>
+                  <span className="font-bold text-white uppercase">{hoveredMove.damageClass}</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
           {player.moves.map(move => (
             <button
               key={move.id}
               onClick={() => handleMove(move)}
-              disabled={!isPlayerTurn || isBattleOver || showSwitchMenu}
+              onMouseEnter={() => setHoveredMove(move)}
+              onMouseLeave={() => setHoveredMove(null)}
+              onTouchStart={() => setHoveredMove(move)}
+              onTouchEnd={() => setHoveredMove(null)}
+              disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu}
               className={`p-4 rounded-xl border transition-all flex flex-col items-start gap-1 group
-                ${isPlayerTurn && !isBattleOver && !showSwitchMenu
+                ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu
                   ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-95' 
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
