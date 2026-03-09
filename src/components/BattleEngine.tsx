@@ -576,7 +576,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <PokemonSprite 
               id={enemy.id} 
               name={enemy.name} 
-              className="w-16 h-16 md:w-32 md:h-32 ml-1 md:ml-4"
+              className="w-34 h-34 md:w-50 md:h-50 ml-1 md:ml-4"
             />
           </motion.div>
         </div>
@@ -648,7 +648,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               id={player.id} 
               name={player.name} 
               isBack={true}
-              className="w-20 h-20 md:w-48 md:h-48 mr-1 md:mr-4"
+              className="w-36 h-36 md:w-64 md:h-64 mr-1 md:mr-4"
             />
           </motion.div>
           <motion.div 
@@ -714,7 +714,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               animate={{ opacity: 1, y: 0 }}
               className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
             >
-              <div className="bg-slate-800 border border-indigo-500/30 p-2 md:p-3 rounded-xl shadow-2xl text-[10px] md:text-sm max-w-xs">
+              <div className="bg-slate-800 border border-indigo-500/30 px-3 py-2 rounded-xl shadow-2xl text-[10px] md:text-sm max-w-sm">
                 <div className="flex justify-between items-center mb-0.5">
                   <span className="font-bold text-indigo-300 uppercase text-[10px] md:text-xs">{hoveredMove.name}</span>
                   <span className="bg-slate-700 px-1.5 py-0.5 rounded text-[8px] md:text-[10px] uppercase font-bold">{hoveredMove.type}</span>
@@ -747,7 +747,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu}
               className={`p-3 rounded-xl border transition-all flex flex-col items-start gap-1 group text-[11px]
                 ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu
-                  ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-95' 
+                  ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-105' 
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
               <span className="font-bold uppercase tracking-wider text-xs md:text-sm">{move.name}</span>
