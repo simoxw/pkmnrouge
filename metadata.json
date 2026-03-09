@@ -1,0 +1,5 @@
+{
+  "name": "PokeRoguelike PWA",
+  "description": "Un roguelike basato sui Pokémon con combattimenti a turni e meccaniche di draft.",
+  "requestFramePermissions": []
+}

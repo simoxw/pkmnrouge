@@ -1,0 +1,267 @@
+import React, { useState, useEffect } from 'react';
+import { Pokemon, BattlePokemon, GameState, SaveData } from './types';
+import DraftScreen from './components/DraftScreen';
+import RoomNavigation from './components/RoomNavigation';
+import BattleEngine from './components/BattleEngine';
+import { RotateCcw, Download, Loader2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { fetchPokemonData } from './api';
+import { BOSS_ENCOUNTERS } from './constants';
+import { getActualStats, updateStats } from './battle';
+
+const SAVE_KEY = 'poke_rogue_save';
+
+export default function App() {
+  const [gameState, setGameState] = useState<GameState>('DRAFT');
+  const [party, setParty] = useState<BattlePokemon[]>([]);
+  const [enemyPokemon, setEnemyPokemon] = useState<BattlePokemon | null>(null);
+  const [roomNumber, setRoomNumber] = useState(1);
+  const [hasSave, setHasSave] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
+
+  useEffect(() => {
+    const savedData = localStorage.getItem(SAVE_KEY);
+    if (savedData) {
+      setHasSave(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (gameState !== 'DRAFT' && gameState !== 'GAME_OVER' && party.length > 0) {
+      const saveData: SaveData = {
+        gameState,
+        party,
+        roomNumber,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+      setHasSave(true);
+    }
+    
+    if (gameState === 'GAME_OVER') {
+      localStorage.removeItem(SAVE_KEY);
+      setHasSave(false);
+    }
+  }, [gameState, party, roomNumber]);
+
+  const loadGame = () => {
+    const savedData = localStorage.getItem(SAVE_KEY);
+    if (savedData) {
+      try {
+        const data: SaveData = JSON.parse(savedData);
+        setParty(data.party);
+        setRoomNumber(data.roomNumber);
+        setGameState(data.gameState === 'BATTLE' ? 'NAVIGATION' : data.gameState);
+      } catch (e) {
+        console.error("Save load error", e);
+        localStorage.removeItem(SAVE_KEY);
+        setHasSave(false);
+      }
+    }
+  };
+
+  const handlePokemonSelect = (pokemon: Pokemon) => {
+    const actualStats = getActualStats(pokemon.baseStats);
+    const newPokemon: BattlePokemon = {
+      ...pokemon,
+      actualStats,
+      currentHp: actualStats.hp,
+      maxHp: actualStats.hp,
+      level: 50
+    };
+
+    if (gameState === 'DRAFT') {
+      setParty([newPokemon]);
+      setGameState('NAVIGATION');
+    } else if (gameState === 'RECRUITMENT') {
+      if (party.length < 6) {
+        setParty(prev => [...prev, newPokemon]);
+        setGameState('NAVIGATION');
+      } else {
+        // Party is full, need to choose who to replace
+        setPendingRecruit(newPokemon);
+      }
+    }
+  };
+
+  const handleReplace = (index: number) => {
+    if (pendingRecruit) {
+      const newParty = [...party];
+      newParty[index] = pendingRecruit;
+      setParty(newParty);
+      setPendingRecruit(null);
+      setGameState('NAVIGATION');
+    }
+  };
+
+  const startBattle = async () => {
+    setLoading(true);
+    try {
+      let enemyId: number;
+      const isBossRoom = BOSS_ENCOUNTERS[roomNumber];
+      
+      if (isBossRoom) {
+        enemyId = isBossRoom[Math.floor(Math.random() * isBossRoom.length)];
+      } else {
+        enemyId = Math.floor(Math.random() * 493) + 1;
+      }
+
+      const enemyData = await fetchPokemonData(enemyId);
+      const actualStats = getActualStats(enemyData.baseStats);
+      
+      // Boss have a multiplier on HP
+      const hpMultiplier = isBossRoom ? 1.5 : 1;
+      const maxHp = Math.floor(actualStats.hp * hpMultiplier);
+
+      setEnemyPokemon({
+        ...enemyData,
+        actualStats,
+        currentHp: maxHp,
+        maxHp: maxHp
+      });
+      setGameState('BATTLE');
+    } catch (error) {
+      console.error("Failed to start battle:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBattleEnd = (winner: 'player' | 'enemy') => {
+    if (winner === 'player') {
+      // Level Up & Heal Active Pokemon
+      const updatedParty = [...party];
+      let activePkmn = updatedParty[0];
+      
+      // Level Up
+      activePkmn = updateStats(activePkmn, activePkmn.level + 1);
+      
+      // Heal 30%
+      const healAmount = Math.floor(activePkmn.maxHp * 0.3);
+      activePkmn.currentHp = Math.min(activePkmn.maxHp, activePkmn.currentHp + healAmount);
+      
+      updatedParty[0] = activePkmn;
+      setParty(updatedParty);
+
+      const nextRoom = roomNumber + 1;
+      setRoomNumber(nextRoom);
+
+      // Check for Recruitment (Boss floors 10, 20, 30, 40, 50, or every boss after 60)
+      const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
+      if (isBossFloor && (roomNumber <= 50 || roomNumber >= 60)) {
+        setGameState('RECRUITMENT');
+      } else {
+        setGameState('NAVIGATION');
+      }
+    } else {
+      setGameState('GAME_OVER');
+    }
+  };
+
+  const restartGame = () => {
+    setGameState('DRAFT');
+    setRoomNumber(1);
+    setParty([]);
+    setEnemyPokemon(null);
+    setPendingRecruit(null);
+  };
+
+  return (
+    <div className="h-screen w-full overflow-hidden bg-slate-950">
+      {loading && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+          <Loader2 className="animate-spin text-indigo-500 mb-4" size={48} />
+          <p className="font-bold tracking-widest uppercase text-sm">Preparazione Battaglia...</p>
+        </div>
+      )}
+
+      {gameState === 'DRAFT' && (
+        <div className="relative h-full">
+          {hasSave && (
+            <div className="absolute top-6 right-6 z-50">
+              <button
+                onClick={loadGame}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+              >
+                <Download size={18} />
+                Carica Partita
+              </button>
+            </div>
+          )}
+          <DraftScreen onSelect={handlePokemonSelect} />
+        </div>
+      )}
+
+      {gameState === 'NAVIGATION' && (
+        <RoomNavigation 
+          roomNumber={roomNumber} 
+          onEnterBattle={startBattle} 
+        />
+      )}
+
+      {gameState === 'RECRUITMENT' && (
+        <DraftScreen 
+          onSelect={handlePokemonSelect} 
+          title="Nuovo Reclutamento" 
+          subtitle={`Hai sconfitto il Boss! Scegli un nuovo membro per il tuo party.`}
+        />
+      )}
+
+      {pendingRecruit && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6">
+          <h2 className="text-3xl font-black text-white mb-2 uppercase italic">Party Pieno!</h2>
+          <p className="text-slate-400 mb-8">Scegli chi sostituire con {pendingRecruit.name}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl">
+            {party.map((pkmn, i) => (
+              <button
+                key={pkmn.id + i}
+                onClick={() => handleReplace(i)}
+                className="bg-slate-900 border border-white/10 p-4 rounded-2xl hover:bg-rose-900/40 hover:border-rose-500/50 transition-all group"
+              >
+                <div className="text-xs text-slate-500 mb-1">Slot {i + 1}</div>
+                <div className="font-bold text-white group-hover:text-rose-200">{pkmn.name}</div>
+                <div className="text-[10px] text-slate-400">Lv. {pkmn.level}</div>
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={() => { setPendingRecruit(null); setGameState('NAVIGATION'); }}
+            className="mt-8 text-slate-500 hover:text-white text-sm font-bold uppercase tracking-widest"
+          >
+            Annulla Reclutamento
+          </button>
+        </div>
+      )}
+
+      {gameState === 'BATTLE' && party.length > 0 && enemyPokemon && (
+        <BattleEngine 
+          playerPokemon={party[0]} 
+          enemyPokemon={enemyPokemon} 
+          party={party}
+          onBattleEnd={handleBattleEnd} 
+        />
+      )}
+
+      {gameState === 'GAME_OVER' && (
+        <div className="h-full bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center"
+          >
+            <h1 className="text-6xl font-black text-rose-500 mb-4">GAME OVER</h1>
+            <p className="text-slate-400 mb-8">Sei arrivato alla stanza {roomNumber}</p>
+            <button 
+              onClick={restartGame}
+              className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-colors"
+            >
+              <RotateCcw size={20} />
+              Riprova
+            </button>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}

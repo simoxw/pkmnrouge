@@ -1,0 +1,70 @@
+export enum Type {
+  NORMAL = 'Normal',
+  FIRE = 'Fire',
+  WATER = 'Water',
+  GRASS = 'Grass',
+  ELECTRIC = 'Electric',
+  ICE = 'Ice',
+  FIGHTING = 'Fighting',
+  POISON = 'Poison',
+  GROUND = 'Ground',
+  FLYING = 'Flying',
+  PSYCHIC = 'Psychic',
+  BUG = 'Bug',
+  ROCK = 'Rock',
+  GHOST = 'Ghost',
+  DRAGON = 'Dragon',
+  STEEL = 'Steel',
+  DARK = 'Dark'
+}
+
+export interface Move {
+  id: string;
+  name: string;
+  type: Type;
+  power: number;
+  accuracy: number;
+  pp: number;
+}
+
+export interface Stats {
+  hp: number;
+  attack: number;
+  defense: number;
+  spAtk: number;
+  spDef: number;
+  speed: number;
+}
+
+export interface Pokemon {
+  id: string;
+  name: string;
+  types: Type[];
+  baseStats: Stats;
+  moves: Move[];
+  ability: string;
+  spriteUrl: string;
+}
+
+export interface BattlePokemon extends Pokemon {
+  currentHp: number;
+  maxHp: number;
+  actualStats: Stats;
+  level: number;
+}
+
+export interface BattleLog {
+  id: string;
+  message: string;
+  type: 'info' | 'damage' | 'status' | 'victory' | 'defeat';
+}
+
+export type GameState = 'DRAFT' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'GAME_OVER';
+
+export interface SaveData {
+  gameState: GameState;
+  party: BattlePokemon[];
+  roomNumber: number;
+  timestamp: number;
+}
+
