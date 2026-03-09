@@ -375,37 +375,37 @@ export default function App() {
       )}
 
       {gameState === 'LEARN_MOVE' && pendingMove && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-white">
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 pb-10 max-h-[100dvh] overflow-y-auto custom-scrollbar text-white">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-center max-w-2xl w-full"
+            className="text-center max-w-2xl w-full flex flex-col items-center"
           >
-            <h2 className="text-3xl font-black mb-2 uppercase italic tracking-tighter">Nuova Mossa!</h2>
-            <p className="text-slate-400 mb-8">
+            <h2 className="text-3xl sm:text-4xl font-black mb-2 uppercase italic tracking-tighter">Nuova Mossa!</h2>
+            <p className="text-slate-400 mb-6">
               {party[pendingMove.pokemonIndex].name} vuole imparare <span className="text-indigo-400 font-bold">{pendingMove.newMove.name}</span>.
               Scegli quale mossa dimenticare.
             </p>
 
-            <div className="bg-indigo-600/10 border border-indigo-500/30 p-6 rounded-3xl mb-8 flex flex-col items-center">
+            <div className="bg-indigo-600/10 border border-indigo-500/30 p-4 sm:p-6 rounded-3xl mb-6 flex flex-col items-center w-full">
               <div className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold mb-1">Nuova Mossa</div>
-              <div className="text-2xl font-black uppercase">{pendingMove.newMove.name}</div>
-              <div className="flex gap-4 mt-2 text-sm opacity-70 font-mono">
+              <div className="text-xl sm:text-2xl font-black uppercase">{pendingMove.newMove.name}</div>
+              <div className="flex gap-3 sm:gap-4 mt-2 text-xs sm:text-sm opacity-70 font-mono">
                 <span>TIPO: {pendingMove.newMove.type}</span>
                 <span>PWR: {pendingMove.newMove.power}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 w-full">
               {party[pendingMove.pokemonIndex].moves.map((move, i) => (
                 <button
                   key={move.id + i}
                   onClick={() => handleLearnMove(i)}
-                  className="bg-slate-900 border border-white/10 p-5 rounded-2xl hover:bg-slate-800 hover:border-white/30 transition-all text-left group"
+                  className="bg-slate-900 border border-white/10 py-2 px-3 sm:p-5 rounded-2xl hover:bg-slate-800 hover:border-white/30 transition-all text-left group active:border-indigo-400 active:ring-2 active:ring-indigo-400"
                 >
                   <div className="text-[10px] text-slate-500 mb-1 uppercase font-bold">Slot {i + 1}</div>
-                  <div className="font-bold text-lg group-hover:text-indigo-300 transition-colors">{move.name}</div>
-                  <div className="flex gap-3 mt-1 text-xs opacity-50 font-mono">
+                  <div className="font-bold text-lg sm:text-xl group-hover:text-indigo-300 transition-colors">{move.name}</div>
+                  <div className="flex gap-2 sm:gap-3 mt-1 text-[10px] sm:text-xs opacity-50 font-mono">
                     <span>{move.type}</span>
                     <span>PWR: {move.power}</span>
                   </div>
@@ -415,7 +415,7 @@ export default function App() {
 
             <button 
               onClick={() => handleLearnMove(null)}
-              className="mt-10 text-slate-500 hover:text-rose-400 text-sm font-bold uppercase tracking-widest transition-colors"
+              className="mt-6 mb-6 text-slate-500 hover:text-rose-400 text-sm font-bold uppercase tracking-widest transition-colors sticky bottom-0"
             >
               Non imparare {pendingMove.newMove.name}
             </button>

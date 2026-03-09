@@ -18,6 +18,17 @@
     display: none; /* Hide scrollbar on Chrome/Safari */
   }
 
+  /* utility alias for custom scrollbar behavior */
+  .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hide scrollbar on Firefox */
+    overscroll-behavior: contain; /* Prevent rubber-band scrolling */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    display: none; /* Hide scrollbar on Chrome/Safari */
+  }
+
   /* Portrait-only warning overlay */
   .landscape-warning {
     display: none;
