@@ -154,13 +154,8 @@ export default function App() {
       let enemiesToFetch: number[] = [];
       
       if (isBossRoom) {
-        // Boss team size: 1 at room 10, 2 at room 20, ..., 6 at room 60+
         const teamSize = Math.min(6, Math.floor(roomNumber / 10));
-        
-        // Pick 'teamSize' random IDs from the boss encounter list for this room
-        for (let i = 0; i < teamSize; i++) {
-          enemiesToFetch.push(isBossRoom[Math.floor(Math.random() * isBossRoom.length)]);
-        }
+        enemiesToFetch = isBossRoom.slice(0, teamSize);
       } else {
         enemiesToFetch = [Math.floor(Math.random() * 493) + 1];
       }
