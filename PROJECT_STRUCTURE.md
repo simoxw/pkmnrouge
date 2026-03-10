@@ -1,48 +1,51 @@
 # Project Structure
 
-Questo progetto è una web app (Vite + React + TypeScript + Tailwind) che implementa un mini roguelike Pokémon con draft iniziale, navigazione stanze, battaglia a turni, shop, salvataggio e PWA.
+Questa web app usa Vite + React + TypeScript e implementa un roguelike Pokémon leggero.
 
 ## Root
 
-- **`index.html`**: entry HTML usata da Vite.
-- **`package.json`**: dipendenze e script (`dev`, `build`, `lint`).
-- **`vite.config.ts`**: configurazione Vite, PWA (`vite-plugin-pwa`) e alias `@ -> /src`.
-- **`PROJECT_STRUCTURE.md`**: questa mappa del progetto.
+- `index.html`: pagina HTML entry con meta tag SEO/PWA e lingua `it`.
+- `package.json`: dipendenze e script (`dev`, `build`, `lint`).
+- `tsconfig.json`: configurazione TypeScript.
+- `vite.config.ts`: configurazione Vite (alias, plugin, PWA).
+- `README.md`: documentazione di progetto.
+- `PROJECT_STRUCTURE.md`: questa mappa.
+- `REFACTORING_COMPLETE.md`: report refactor & status.
 
-## `src/` (codice applicazione)
+## `src/`
 
-- **`main.tsx`**: bootstrap React (mount dell’app).
-- **`App.tsx`**: orchestratore dello stato globale (party, enemyTeam, room, inventario, gameState) e routing tra schermate; contiene anche la logica di generazione dei nemici/boss (`startBattle`).
-- **`types.ts`**: tipi TypeScript condivisi (`BattlePokemon`, `Move`, `GameState`, ecc.).
-- **`constants.ts`**: costanti di gioco.
-  - **`TYPE_CHART`**: tabella efficacia tipi (usata da `getTypeEffectiveness`).
-  - **`BOSS_ENCOUNTERS`**: **lista manuale** dei Pokémon Boss per stanza (10, 20, …, 100).
-  - **`ITEMS`**: definizione strumenti e relativi effetti.
-- **`api.ts`**: chiamate/fetch per ottenere dati Pokémon e mosse (sorgente dati esterna o layer di accesso).
-- **`pokemonData.ts` / `data.ts`**: dataset/helpers di supporto (cache, mapping, dati locali).
-- **`battle.ts`**: entry “legacy” che re-esporta la logica di battaglia da `utils/` per import più comodi.
-- **`battleLogic.ts`**: entry “legacy” che re-esporta `utils/battleMechanics.ts` (type effectiveness, danno, ecc.).
+- `main.tsx`: mount React.
+- `App.tsx`: controller global-state e game flow (MAIN_MENU, DRAFT, HUB, BATTLE, ecc.).
+- `constants.ts`: dati statici (tipo, boss, articoli, costanti di gioco).
+- `types.ts`: definizioni TypeScript (`BattlePokemon`, `Move`, `GameState`, `SaveData`, ecc.).
 
-### `src/utils/` (logica di dominio)
+### `src/utils/`
 
-- **`utils/battleMechanics.ts`**: formule di gioco (statistiche attuali, update livello, efficacia tipi, calcolo danno con STAB/crit/accuracy).
-- **`utils/moveEffectHandler.ts`**: pipeline turni/effetti mosse (status, stat stages, end-turn damage) e messaggistica “di battaglia”.
+- `battleMechanics.ts`: calcolo stats, tipo efficacia, danno, logica di battaglia.
+- `moveEffectHandler.ts`: applicazione effetti mosse (status, modificatori statistici, danno end-turn, messaggistica).
 
-### `src/hooks/` (stato e side effects)
+### `src/hooks/`
 
-- **`hooks/useGameSave.ts`**: salvataggio/caricamento partita (persistent storage).
-- **`hooks/useSoundEffects.ts`**: riproduzione effetti sonori UI/battaglia.
+- `useGameSave.ts`: salvataggio e caricamento da localStorage.
+- `useSoundEffects.ts`: controllo e riproduzione effetti sonori.
 
-### `src/components/` (UI)
+### `src/components/`
 
-- **`components/DraftScreen.tsx`**: selezione Pokémon (inizio run e reclutamento).
-- **`components/RoomNavigation.tsx`**: schermata navigazione/progressione stanze e accesso alla battaglia.
-- **`components/BattleEngine.tsx`**: UI e loop della battaglia (turni, log, switch, bag, overlay messaggi).
-- **`components/ShopScreen.tsx`**: UI shop e acquisto strumenti.
-- **`components/PokemonSprite.tsx`**: rendering sprite (front/back).
-- **`components/StatStagesBadges.tsx`**: badge/stato per i potenziamenti/penalità alle statistiche.
+- `MainMenu.tsx`: interfaccia menù principale.
+- `DraftScreen.tsx`: draft Pokémon durante run.
+- `TeamHub.tsx`: hub giocatore (statistiche, squadra, item, saldo).
+- `RoomNavigation.tsx`: selezione stanza e andamento run.
+- `ShopScreen.tsx`: shop in-game.
+- `BattleEngine.tsx`: loop di battaglia e log.
+- `PokemonSprite.tsx`: visual dei Pokemon.
+- `StatStagesBadges.tsx`: indicatori modificatori statistici.
 
-### Styling
+## Tooling
 
-- **`index.css`**: base CSS (Tailwind + custom utilities).
+- Tailwind per stili utility-centric.
+- Framer Motion per animazioni.
+- PWA plugin (vite-plugin-pwa) per supporto installabile.
 
+## Nota
+
+La struttura è aggiornata al 2026. Mantieni coerente questo file dopo ogni refactor significativo.

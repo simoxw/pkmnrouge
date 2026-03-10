@@ -4,33 +4,41 @@
 
 # PKM Rouge
 
-**PKM Rouge** è un gioco di battaglie strategiche ispirato al mondo dei mostriciattoli tascabili. I giocatori affrontano sfide in un’arena digitale dove le scelte tattiche e la gestione delle risorse determinano la vittoria.
+**PKM Rouge** è un gioco di battaglie strategiche ispirato al mondo dei mostriciattoli tascabili, sviluppato con Vite + React + TypeScript.
 
-## Introduzione al gioco
+## Funzionalità principali
 
-L’obiettivo principale è sconfiggere i Pokémon avversari durante gli scontri. Ogni partita si svolge in tempo reale con un massimo di quattro creature per squadra. Il giocatore può acquistare, vendere e potenziare mostri in un negozio interno al gioco, influenzando così la composizione e la forza della propria squadra.
+- Combattimento automatico a squadre (fino a 4 Pokémon per squadra)
+- Draft iniziale & shop in-game con monete, acquisti e vendite
+- Navigazione tra stanze con boss encounter a intervalli prefissati
+- Gestione party, oggetti e riepilogo statistiche di gioco
+- Salvataggio locale (`localStorage`) e caricamento della sessione
+- Interfaccia responsive (desktop/mobile) con animazioni
 
-### Meccaniche principali
+## Architettura del progetto
 
-- **Draft e negozio:** All’inizio di ogni turno, il giocatore dispone di una certa quantità di monete da spendere nel negozio. Qui può acquistare nuovi Pokémon, vendere quelli esistenti o pagare per rinnovare l’inventario.
-- **Statistica delle creature:** Ogni Pokémon ha valori di attacco, difesa e velocità che influenzano l’esito degli scontri automatici. L’algoritmo di battaglia (`battleLogic.ts`) si occupa di simulare il combattimento tra le due squadre.
-- **Ordine di attacco:** La velocità determina quale Pokémon attacca per primo. Le abilità e gli oggetti non sono ancora implementati ma potrebbero essere aggiunti in futuro.
-- **Progresso:** Dopo ogni turno, la squadra può essere modificata. Gli XP o i livelli non sono gestiti nel codice attuale; invece, i potenziamenti si ottengono unendo creature dello stesso tipo attraverso operazioni di ``merge`` o con monete.
-- **Interfaccia:** Il front-end React (`App.tsx`, `BattleEngine.tsx`, ecc.) gestisce la visualizzazione degli sprite, delle schermate di negozio/draft e della navigazione tra le varie sezioni del gioco.
+- `src/App.tsx`: orchestratore stato e game flow
+- `src/components/`: UI (MainMenu, DraftScreen, Hub, BattleEngine, Shop, RoomNavigation, TeamHub, ecc.)
+- `src/utils/battleMechanics.ts`: logiche di battaglia (danno, efficacia, statistica)
+- `src/utils/moveEffectHandler.ts`: pipeline effetti mosse e messaggi di combattimento
+- `src/hooks/useGameSave.ts`: gestione salvataggio/caricamento
+- `src/hooks/useSoundEffects.ts`: effetti sonori
+- `src/constants.ts`: costanti tipi, boss, item
+- `src/types.ts`: tipi TS condivisi (`BattlePokemon`, `GameState`, `SaveData`, ecc.)
 
-## Come eseguire il progetto
+## Installazione e avvio
 
-> Nota: la logica principale del gioco non verrà modificata durante queste operazioni.
+1. Clonare il repository
+2. Eseguire `npm install`
+3. Avviare con `npm run dev`
+4. Aprire `http://localhost:3000`
 
-1. Assicurati di avere Node.js installato.
-2. Dalla radice del progetto installa le dipendenze:
-   ```bash
-   npm install
-   ```
-3. Avvia il server di sviluppo:
-   ```bash
-   npm run dev
-   ```
-4. Apri un browser e visita `http://localhost:3000` (o la porta indicata dal terminale) per giocare.
+## Monitorare tipo e build
 
-Buon divertimento con **PKM Rouge!**
+- `npm run build` per compilare in produzione
+- `npm run lint` per analisi statiche
+
+## Note rapide
+
+- Il file `index.html` contiene metadati SEO/PWA e impostazione lingua in italiano (`lang="it"`).
+- Per modifiche principali, aggiornare anche `PROJECT_STRUCTURE.md` e `REFACTORING_COMPLETE.md`.
