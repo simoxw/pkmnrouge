@@ -38,14 +38,15 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const [showBagMenu, setShowBagMenu] = useState(false);
   const [selectedItemForPokemon, setSelectedItemForPokemon] = useState<string | null>(null);
-  const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy' | 'center', text?: string } | null>(null);
+  const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy', text?: string } | null>(null);
   const [hoveredMove, setHoveredMove] = useState<Move | null>(null);
   const [lastEnemyMove, setLastEnemyMove] = useState<Move | null>(null);
+  const [playerEffectivenessMessage, setPlayerEffectivenessMessage] = useState<string | null>(null);
 
   // sound effects
   const { playSound } = useSoundEffects(true);
 
-  const triggerEffect = (type: string, side: 'player' | 'enemy' | 'center', text?: string) => {
+  const triggerEffect = (type: string, side: 'player' | 'enemy', text?: string) => {
     setActiveEffect({ type, side, text });
     setTimeout(() => setActiveEffect(null), 1000);
   };
@@ -143,19 +144,21 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       addLog(`Danno inflitto: ${effectResult.damage}`, 'damage');
     }
 
-    // Effectiveness messages for PLAYER attacks should be readable on mobile:
-    // show them in the central message stream + an optional center pop.
+    // Effectiveness per attacchi del giocatore: badge sotto gli HP avversario + log.
     if (effectResult.effectiveness && effectResult.effectiveness > 1) {
-      addLog('È superefficace!', 'status');
-      setTimeout(() => triggerEffect('supereffective', 'center', 'SUPEREFFICACE!'), 400);
+      const msg = 'È superefficace!';
+      setPlayerEffectivenessMessage(msg);
+      addLog(msg, 'status');
     }
     if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
-      addLog('Non è molto efficace...', 'status');
-      setTimeout(() => triggerEffect('ineffective', 'center', 'POCO EFFICACE'), 400);
+      const msg = 'Non è molto efficace...';
+      setPlayerEffectivenessMessage(msg);
+      addLog(msg, 'status');
     }
     if (effectResult.effectiveness === 0) {
-      addLog('Non ha effetto...', 'status');
-      setTimeout(() => triggerEffect('no-effect', 'center', 'NESSUN EFFETTO'), 400);
+      const msg = 'Non ha effetto...';
+      setPlayerEffectivenessMessage(msg);
+      addLog(msg, 'status');
     }
 
     // Apply healing
@@ -529,7 +532,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   return (
     <div className="flex flex-col h-full bg-slate-900 text-white p-2 md:p-4 font-sans">
       {/* Battle Arena */}
-      <div className="flex-1 flex flex-col justify-start md:justify-around relative overflow-hidden gap-1 md:gap-4">
+      <div className="flex-1 flex flex-col justify-start md:justify-between relative overflow-hidden gap-1 md:gap-4">
         {/* Enemy Side */}
         <div className="flex justify-end items-start p-1 md:p-4 relative">
           {activeEffect?.side === 'enemy' && (
@@ -602,6 +605,11 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <div className="text-right text-[10px] md:text-xs mt-0.5 md:mt-1 font-mono">
               {enemy.currentHp} / {enemy.maxHp} HP
             </div>
+            {playerEffectivenessMessage && (
+              <div className="mt-1 text-center text-[10px] md:text-xs font-bold px-2 py-1 rounded-full bg-slate-900/70 border border-white/10 text-amber-300">
+                {playerEffectivenessMessage}
+              </div>
+            )}
             <StatStagesBadges pokemon={enemy} />
           </motion.div>
           <motion.div
@@ -648,8 +656,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         )}
 
         {/* Player Side */}
-        <div className={`flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4 transition-transform
-          ${lastEnemyMove ? 'md:translate-y-10' : ''}`}>
+        <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4">
           {activeEffect?.side === 'player' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -739,29 +746,6 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
           </motion.div>
         </div>
       </div>
-
-      {/* Center Effects (mobile-friendly) */}
-      {activeEffect?.side === 'center' && (
-        <div className="fixed inset-0 pointer-events-none z-[60] flex items-center justify-center">
-          <AnimatePresence>
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1.1, opacity: 1 }}
-              exit={{ scale: 1.2, opacity: 0 }}
-              className="px-4 py-2 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-sm"
-            >
-              <div className={`text-lg md:text-2xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]
-                ${activeEffect.type === 'supereffective' ? 'text-amber-400' :
-                  activeEffect.type === 'ineffective' ? 'text-slate-300' :
-                  activeEffect.type === 'no-effect' ? 'text-slate-400' :
-                  activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
-              >
-                {activeEffect.text || ''}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      )}
 
       {/* Controls & Logs */}
       <div className="h-auto md:h-64 bg-slate-950 rounded-t-3xl p-3 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-3 md:gap-6 overflow-y-auto md:overflow-y-visible">
