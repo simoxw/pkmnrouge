@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BattlePokemon, Move, BattleLog, InventoryItem } from '../types';
-import { getTypeEffectiveness } from '../battleLogic';
-import { getStatWithStage } from '../utils/battleMechanics';
+
+import { getStatWithStage, getTypeEffectiveness } from '../utils/battleMechanics';
 import { MoveEffectHandler } from '../utils/moveEffectHandler';
 import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
@@ -259,8 +259,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         setEnemyEffectivenessMessage(null);
         addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
         playCry(nextEnemy.cryUrl);
-        setIsPlayerTurn(false); // Enemy switch takes turn or just gives initiative to player? Usually player continues if they outspeed.
-        // In many roguelikes, defeating one enemy in a wave ends your turn.
+        setIsPlayerTurn(true); // Il giocatore attacca subito dopo aver sconfitto un Pokémon nemico
       } else {
         setIsBattleOver(true);
         addLog(`${enemy.name} è esausto! Vittoria!`, 'victory');
@@ -296,17 +295,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     const message = onUseItem(itemId, pokemonIndex);
     addLog(message, 'status');
 
-    // Update local state if used on active pokemon
+    // Sync local player state with the updated party[0] managed by App.tsx
     if (pokemonIndex === 0) {
-      const updatedPkmn = party[0]; // App.tsx already updated it
-      // Wait, party is updated in App.tsx, but local 'player' state might be stale
-      // Actually, App.tsx updates 'party' which is passed as prop, but 'player' is local state.
-      // Let's sync local state.
-      const item = ITEMS.find(i => i.id === itemId);
-      if (item) {
-        const { updatedPokemon } = item.effect(player);
-        commitPlayer(() => updatedPokemon);
-      }
+      setPlayer(prev => ({ ...prev, ...party[0] }));
     }
 
     setShowBagMenu(false);

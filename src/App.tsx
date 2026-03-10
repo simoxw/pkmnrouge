@@ -17,6 +17,8 @@ import { useSoundEffects } from './hooks/useSoundEffects';
 
 
 
+const STATS_KEY = 'pkmrouge_stats';
+
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('MAIN_MENU');
   const [party, setParty] = useState<BattlePokemon[]>([]);
@@ -32,7 +34,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : { soundEnabled: true, musicEnabled: true };
   });
   const [gameStats, setGameStats] = useState<GameStats>(() => {
-    const saved = localStorage.getItem('pkmrouge_stats');
+    const saved = localStorage.getItem(STATS_KEY);
     return saved
       ? JSON.parse(saved)
       : { maxRoomReached: 0, mostUsedPokemonId: '', maxLevelAchieved: 0 };
@@ -82,7 +84,7 @@ export default function App() {
         maxLevelAchieved: Math.max(prev.maxLevelAchieved, newMaxLevel),
         mostUsedPokemonId: party[0]?.name || prev.mostUsedPokemonId
       };
-      localStorage.setItem('pkmrouge_stats', JSON.stringify(updated));
+      localStorage.setItem(STATS_KEY, JSON.stringify(updated));
       return updated;
     });
   };
@@ -277,7 +279,7 @@ export default function App() {
 
       // Check for Recruitment (Boss floors 10, 20, 30, 40, 50, or every boss after 60)
       const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
-      if (isBossFloor && (roomNumber <= 50 || roomNumber >= 60)) {
+      if (isBossFloor) {
         setGameState('RECRUITMENT');
       } else {
         setGameState('HUB');
@@ -363,7 +365,7 @@ export default function App() {
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-slate-950">
       {/* orientation warning for landscape mode */}
-      <div className="orientation-warning hidden fixed inset-0 bg-black/80 text-white flex items-center justify-center text-xl font-bold z-50">
+      <div className="landscape-warning hidden fixed inset-0 bg-black/80 text-white flex items-center justify-center text-xl font-bold z-50">
         Ruota il dispositivo in verticale per continuare
       </div>
       {loading && (

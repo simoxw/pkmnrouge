@@ -1,5 +1,5 @@
 import { BattlePokemon, Move, Type, StatusCondition, Stats } from '../types';
-import { getTypeEffectiveness } from '../battleLogic';
+import { getTypeEffectiveness } from './battleMechanics';
 import { getStatWithStage, calculateDamage } from './battleMechanics';
 
 export enum MoveCategory {
