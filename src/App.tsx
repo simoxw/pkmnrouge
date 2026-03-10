@@ -232,7 +232,7 @@ export default function App() {
   const handleBattleEnd = async (winner: 'player' | 'enemy') => {
     if (winner === 'player') {
       // Award money
-      setMoney(prev => prev + 100);
+      setMoney(prev => prev + 50);
 
       // Level Up & Heal Active Pokemon
       const updatedParty = [...party];
