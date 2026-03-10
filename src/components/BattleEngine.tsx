@@ -797,12 +797,12 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               animate={{ opacity: 1, y: 0 }}
               className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
             >
-              <div className="bg-slate-800 border border-indigo-500/30 px-3 py-2 rounded-xl shadow-2xl text-[10px] md:text-sm max-w-sm">
-                <div className="flex justify-between items-center mb-0.5">
-                  <span className="font-bold text-indigo-300 uppercase text-[10px] md:text-xs">{hoveredMove.name}</span>
-                  <span className="bg-slate-700 px-1.5 py-0.5 rounded text-[8px] md:text-[10px] uppercase font-bold">{hoveredMove.type}</span>
+              <div className="bg-slate-800 border border-indigo-500/30 px-4 py-3 rounded-xl shadow-2xl text-[11px] md:text-base max-w-md">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-bold text-indigo-300 uppercase text-[11px] md:text-sm">{hoveredMove.name}</span>
+                  <span className="bg-slate-700 px-2 py-1 rounded text-[9px] md:text-[11px] uppercase font-bold">{hoveredMove.type}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-1 text-[8px] md:text-[9px] font-mono">
+                <div className="grid grid-cols-3 gap-2 text-[9px] md:text-[10px] font-mono">
                   <div className="flex flex-col">
                     <span className="opacity-50 uppercase text-[7px]">Potenza</span>
                     <span className="font-bold text-white">{hoveredMove.power || '--'}</span>
