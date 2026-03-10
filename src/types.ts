@@ -27,6 +27,7 @@ export interface Move {
   power: number;
   accuracy: number;
   pp: number;
+  currentPp?: number;
   damageClass: DamageClass;
   ailment?: string;
   ailmentChance?: number;

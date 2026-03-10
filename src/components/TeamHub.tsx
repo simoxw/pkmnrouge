@@ -169,8 +169,13 @@ export default function TeamHub({
                       animate={{ width: `${(pkmn.currentHp / pkmn.maxHp) * 100}%` }}
                     />
                   </div>
-                  <div className="text-xs text-slate-400">
-                    {pkmn.currentHp} / {pkmn.maxHp} HP
+                  <div className="text-[10px] text-slate-400 flex flex-wrap gap-x-2 gap-y-1 mt-1">
+                    <span className="font-bold">{pkmn.currentHp} / {pkmn.maxHp} HP</span>
+                    {pkmn.moves.map((m, idx) => (
+                      <span key={m.id + idx} className="opacity-70">
+                        {m.name}: {m.currentPp ?? m.pp}/{m.pp}
+                      </span>
+                    ))}
                   </div>
                 </div>
                 {showTeamManager && i > 0 && (

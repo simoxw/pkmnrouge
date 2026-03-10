@@ -89,6 +89,108 @@ export const ITEMS: Item[] = [
       }
       return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
     }
+  },
+  {
+    id: 'ether',
+    name: 'Etere',
+    description: 'Ripristina 10 PP alla mossa con meno PP rimasti.',
+    price: 80,
+    effect: (pkmn: BattlePokemon) => {
+      // Trova la mossa con currentPp più basso (esclude mosse già al massimo)
+      const moveIndex = pkmn.moves.reduce((lowestIdx, move, idx, arr) => {
+        const currPp = move.currentPp ?? move.pp;
+        const lowestPp = arr[lowestIdx].currentPp ?? arr[lowestIdx].pp;
+        return currPp < lowestPp ? idx : lowestIdx;
+      }, 0);
+      
+      const move = pkmn.moves[moveIndex];
+      const currentPp = move.currentPp ?? move.pp;
+      
+      if (currentPp >= move.pp) {
+        return { updatedPokemon: pkmn, message: 'Tutte le mosse hanno i PP pieni!' };
+      }
+      
+      const newMoves = pkmn.moves.map((m, idx) =>
+        idx === moveIndex
+          ? { ...m, currentPp: Math.min(m.pp, currentPp + 10) }
+          : m
+      );
+      
+      return {
+        updatedPokemon: { ...pkmn, moves: newMoves },
+        message: `PP di ${move.name} ripristinati!`
+      };
+    }
+  },
+  {
+    id: 'max_ether',
+    name: 'Superetere',
+    description: 'Ripristina tutti i PP alla mossa con meno PP rimasti.',
+    price: 150,
+    effect: (pkmn: BattlePokemon) => {
+      const moveIndex = pkmn.moves.reduce((lowestIdx, move, idx, arr) => {
+        const currPp = move.currentPp ?? move.pp;
+        const lowestPp = arr[lowestIdx].currentPp ?? arr[lowestIdx].pp;
+        return currPp < lowestPp ? idx : lowestIdx;
+      }, 0);
+      
+      const move = pkmn.moves[moveIndex];
+      const currentPp = move.currentPp ?? move.pp;
+      
+      if (currentPp >= move.pp) {
+        return { updatedPokemon: pkmn, message: 'Tutte le mosse hanno i PP pieni!' };
+      }
+      
+      const newMoves = pkmn.moves.map((m, idx) =>
+        idx === moveIndex ? { ...m, currentPp: m.pp } : m
+      );
+      
+      return {
+        updatedPokemon: { ...pkmn, moves: newMoves },
+        message: `PP di ${move.name} completamente ripristinati!`
+      };
+    }
+  },
+  {
+    id: 'elixir',
+    name: 'Elisir',
+    description: 'Ripristina 10 PP a tutte le mosse.',
+    price: 250,
+    effect: (pkmn: BattlePokemon) => {
+      const allFull = pkmn.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
+      if (allFull) {
+        return { updatedPokemon: pkmn, message: 'Tutte le mosse hanno i PP pieni!' };
+      }
+      
+      const newMoves = pkmn.moves.map(m => ({
+        ...m,
+        currentPp: Math.min(m.pp, (m.currentPp ?? m.pp) + 10)
+      }));
+      
+      return {
+        updatedPokemon: { ...pkmn, moves: newMoves },
+        message: `PP di tutte le mosse di ${pkmn.name} ripristinati di 10!`
+      };
+    }
+  },
+  {
+    id: 'max_elixir',
+    name: 'Superelisir',
+    description: 'Ripristina tutti i PP di tutte le mosse.',
+    price: 500,
+    effect: (pkmn: BattlePokemon) => {
+      const allFull = pkmn.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
+      if (allFull) {
+        return { updatedPokemon: pkmn, message: 'Tutte le mosse hanno i PP pieni!' };
+      }
+      
+      const newMoves = pkmn.moves.map(m => ({ ...m, currentPp: m.pp }));
+      
+      return {
+        updatedPokemon: { ...pkmn, moves: newMoves },
+        message: `Tutti i PP di ${pkmn.name} ripristinati!`
+      };
+    }
   }
 ];
 

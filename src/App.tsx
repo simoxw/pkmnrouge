@@ -64,7 +64,12 @@ export default function App() {
       ...pkmn,
       currentHp: Math.min(pkmn.maxHp, Math.ceil(pkmn.currentHp + pkmn.maxHp * 0.3)),
       // Reset stat stage modifiers (+1, +2, -1, -2) but keep status conditions (paralysis, poison, etc.)
-      statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+      statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 },
+      moves: pkmn.moves.map(m => ({
+        ...m,
+        currentPp: Math.min(m.pp, (m.currentPp ?? m.pp) + 3)
+        // +3 PP per mossa dopo ogni vittoria, mai sopra il massimo
+      }))
     }));
   };
 
@@ -108,7 +113,11 @@ export default function App() {
         spAtk: 0,
         spDef: 0,
         speed: 0
-      }
+      },
+      moves: pokemon.moves.map(m => ({
+        ...m,
+        currentPp: m.pp
+      }))
     };
 
     if (gameState === 'DRAFT') {
@@ -190,7 +199,8 @@ export default function App() {
             spAtk: 0,
             spDef: 0,
             speed: 0
-          }
+          },
+          moves: enemyData.moves.map(m => ({ ...m, currentPp: m.pp }))
         };
       }));
 

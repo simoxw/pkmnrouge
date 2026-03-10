@@ -133,6 +133,15 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
     const effectResult = turnResult.effectResult!;
     
+    // Decrement PP
+    const moveIndex = player.moves.findIndex(m => m.id === move.id);
+    if (moveIndex !== -1) {
+      const newMoves = [...player.moves];
+      const currentMovePp = newMoves[moveIndex].currentPp ?? newMoves[moveIndex].pp;
+      newMoves[moveIndex] = { ...newMoves[moveIndex], currentPp: Math.max(0, currentMovePp - 1) };
+      commitPlayer(prev => ({ ...prev, moves: newMoves }));
+    }
+
     // Handle miss
     if (effectResult.isMiss) {
       triggerEffect('miss', 'enemy', 'FALLITO!');
@@ -811,16 +820,16 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               onMouseLeave={() => setHoveredMove(null)}
               onTouchStart={() => setHoveredMove(move)}
               onTouchEnd={() => setHoveredMove(null)}
-              disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu}
+              disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu || (move.currentPp !== undefined && move.currentPp <= 0)}
               className={`p-3 rounded-xl border transition-all flex flex-col items-start gap-1 group text-[11px]
-                ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu
+                ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu && (move.currentPp === undefined || move.currentPp > 0)
                   ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-105' 
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
               <span className="font-bold uppercase tracking-wider text-xs md:text-sm">{move.name}</span>
-              <div className="flex items-center gap-1 text-[9px] md:text-[10px] opacity-60">
+              <div className="flex items-center justify-between w-full text-[9px] md:text-[10px] opacity-60">
                 <span className="bg-slate-700 px-1.5 py-0.5 rounded uppercase text-[8px]">{move.type}</span>
-                <span>PWR: {move.power}</span>
+                <span className="font-mono">{move.currentPp ?? move.pp}/{move.pp} PP</span>
               </div>
             </button>
           ))}
