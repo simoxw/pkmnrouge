@@ -153,7 +153,16 @@ export default function TeamHub({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="font-bold truncate">{pkmn.name}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold truncate">{pkmn.name}</div>
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {pkmn.types.map(type => (
+                          <span key={`team-type-${pkmn.id}-${type}`} className="text-[8px] uppercase font-bold bg-slate-700/70 px-2 py-0.5 rounded-full border border-white/10">
+                            {type}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                     <span className="text-xs text-slate-400">Lv. {pkmn.level}</span>
                   </div>
                   <div className="h-2 bg-slate-700 rounded-full overflow-hidden">

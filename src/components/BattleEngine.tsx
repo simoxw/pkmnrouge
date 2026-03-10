@@ -585,18 +585,27 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             className="bg-slate-800/80 p-2 md:p-4 rounded-2xl border border-white/10 w-52 md:w-64 shadow-xl text-xs md:text-base"
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="font-bold text-base md:text-lg truncate">{enemy.name}</span>
-                {enemy.status && (
-                  <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
-                    ${enemy.status === 'PAR' ? 'bg-amber-400' :
-                      enemy.status === 'BRN' ? 'bg-rose-500' :
-                        enemy.status === 'PSN' ? 'bg-purple-500' :
-                          enemy.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
-                  >
-                    {enemy.status}
-                  </span>
-                )}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="font-bold text-base md:text-lg truncate">{enemy.name}</span>
+                  {enemy.status && (
+                    <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
+                      ${enemy.status === 'PAR' ? 'bg-amber-400' :
+                        enemy.status === 'BRN' ? 'bg-rose-500' :
+                          enemy.status === 'PSN' ? 'bg-purple-500' :
+                            enemy.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
+                    >
+                      {enemy.status}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {enemy.types.map(type => (
+                    <span key={`enemy-type-${type}`} className="text-[8px] md:text-[10px] uppercase font-bold bg-slate-700/70 px-2 py-0.5 rounded-full border border-white/10">
+                      {type}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="flex flex-col items-end text-right">
                 <span className="text-[10px] md:text-xs opacity-60">Lv. {enemy.level || 50}</span>
@@ -718,18 +727,27 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             className="bg-slate-800/80 p-2 md:p-4 rounded-2xl border border-white/10 w-52 md:w-64 shadow-xl text-xs md:text-base"
           >
             <div className="flex justify-between items-start mb-1">
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="font-bold text-base md:text-lg truncate">{player.name}</span>
-                {player.status && (
-                  <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
-                    ${player.status === 'PAR' ? 'bg-amber-400' :
-                      player.status === 'BRN' ? 'bg-rose-500' :
-                        player.status === 'PSN' ? 'bg-purple-500' :
-                          player.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
-                  >
-                    {player.status}
-                  </span>
-                )}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="font-bold text-base md:text-lg truncate">{player.name}</span>
+                  {player.status && (
+                    <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
+                      ${player.status === 'PAR' ? 'bg-amber-400' :
+                        player.status === 'BRN' ? 'bg-rose-500' :
+                          player.status === 'PSN' ? 'bg-purple-500' :
+                            player.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
+                    >
+                      {player.status}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {player.types.map(type => (
+                    <span key={`player-type-${type}`} className="text-[8px] md:text-[10px] uppercase font-bold bg-slate-700/70 px-2 py-0.5 rounded-full border border-white/10">
+                      {type}
+                    </span>
+                  ))}
+                </div>
               </div>
               <span className="text-[10px] md:text-xs opacity-60">Lv. {player.level}</span>
             </div>
