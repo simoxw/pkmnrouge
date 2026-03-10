@@ -31,13 +31,11 @@ export function useGameSave({ party, roomNumber, money, inventory, gameState }: 
         inventory,
         timestamp: Date.now(),
       };
-      console.log(`💾 Salvataggio partita - State: ${gameState}, Room: ${roomNumber}, Party: ${party.length}`);
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
       setHasSave(true);
     }
 
     if (gameState === 'GAME_OVER') {
-      console.log('🗑️ Gioco finito - Salvataggio rimosso');
       localStorage.removeItem(SAVE_KEY);
       setHasSave(false);
     }
@@ -45,20 +43,14 @@ export function useGameSave({ party, roomNumber, money, inventory, gameState }: 
 
   const loadGame = (): SaveData | null => {
     const savedData = localStorage.getItem(SAVE_KEY);
-    console.log('📂 SAVE_KEY:', SAVE_KEY);
-    console.log('📂 Dati dal localStorage:', savedData ? savedData.substring(0, 100) + '...' : 'NULL');
     if (savedData) {
       try {
-        const parsed = JSON.parse(savedData) as SaveData;
-        console.log('✅ Salvataggio parsato con successo');
-        return parsed;
+        return JSON.parse(savedData) as SaveData;
       } catch (err) {
-        console.error('❌ Errore nel parsing del salvataggio:', err);
+        console.error('Save load error', err);
         localStorage.removeItem(SAVE_KEY);
         setHasSave(false);
       }
-    } else {
-      console.warn('⚠️ Nessun salvataggio trovato nel localStorage con chiave:', SAVE_KEY);
     }
     return null;
   };

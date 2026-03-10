@@ -46,31 +46,25 @@ export default function App() {
 
   const handleLoadGame = () => {
     playSound('click');
-    console.log('🔄 handleLoadGame clicked');
     const data = loadGame();
-    console.log('📦 Data caricato:', data);
     if (data) {
-      console.log('✅ Caricamento partita...');
       setParty(data.party);
       setRoomNumber(data.roomNumber);
       setMoney(data.money || 0);
       setInventory(data.inventory || []);
       // Converte qualsiasi stato a HUB quando si carica una partita salvata
-      // (NAVIGATION, BATTLE, MAIN_MENU, ecc. -> HUB)
       let nextState: GameState = 'HUB';
-      console.log('🎮 Nuovo state:', nextState);
       setGameState(nextState);
-    } else {
-      console.error('❌ ERRORE: Nessun salvataggio trovato nel localStorage');
-      alert('Errore: Nessun salvataggio trovato. Verifica il localStorage.');
     }
   };
 
-  // Apply 30% healing to all pokemon after battle
+  // Apply 30% healing to all pokemon after battle and reset stat stage modifiers
   const applyRest = (partyToRest: BattlePokemon[]): BattlePokemon[] => {
     return partyToRest.map(pkmn => ({
       ...pkmn,
-      currentHp: Math.min(pkmn.maxHp, Math.ceil(pkmn.currentHp + pkmn.maxHp * 0.3))
+      currentHp: Math.min(pkmn.maxHp, Math.ceil(pkmn.currentHp + pkmn.maxHp * 0.3)),
+      // Reset stat stage modifiers (+1, +2, -1, -2) but keep status conditions (paralysis, poison, etc.)
+      statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
     }));
   };
 
