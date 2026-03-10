@@ -8,7 +8,7 @@
 
 ## Funzionalità principali
 
-- Combattimento automatico a squadre (fino a 4 Pokémon per squadra)
+- Combattimento automatico a squadre (fino a 6 Pokémon per squadra)
 - Draft iniziale & shop in-game con monete, acquisti e vendite
 - Navigazione tra stanze con boss encounter a intervalli prefissati
 - Gestione party, oggetti e riepilogo statistiche di gioco
