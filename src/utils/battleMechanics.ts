@@ -1,6 +1,23 @@
 import { BattlePokemon, Move, Type, Stats } from '../types';
 import { TYPE_CHART } from '../constants';
 
+// Tabella moltiplicatori stage (Gen 4/5 standard)
+const STAGE_MULTIPLIERS: Record<number, number> = {
+  [-6]: 0.25, [-5]: 2/7, [-4]: 1/3, [-3]: 0.4,
+  [-2]: 0.5,  [-1]: 2/3, [0]: 1,
+  [1]: 1.5,   [2]: 2,    [3]: 2.5,
+  [4]: 3,     [5]: 3.5,  [6]: 4
+};
+
+/**
+ * Applica il moltiplicatore di stage a una statistica base
+ */
+export function getStatWithStage(baseStat: number, stage: number): number {
+  const clamped = Math.max(-6, Math.min(6, stage));
+  const multiplier = STAGE_MULTIPLIERS[clamped] ?? 1;
+  return Math.floor(baseStat * multiplier);
+}
+
 export function calculateHP(base: number, level: number = 50): number {
   return Math.floor((base * level) / 50) + level + 10;
 }
@@ -63,9 +80,22 @@ export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon
 
   const level = attacker.level || 50;
   
-  // Damage Class handling
-  let A = move.damageClass === 'physical' ? attacker.actualStats.attack : attacker.actualStats.spAtk;
-  let D = move.damageClass === 'physical' ? defender.actualStats.defense : defender.actualStats.spDef;
+  // Damage Class handling con applicazione dei stage multipliers
+  const atkStage = move.damageClass === 'physical'
+    ? (attacker.statStages?.attack ?? 0)
+    : (attacker.statStages?.spAtk ?? 0);
+  const defStage = move.damageClass === 'physical'
+    ? (defender.statStages?.defense ?? 0)
+    : (defender.statStages?.spDef ?? 0);
+
+  let A = getStatWithStage(
+    move.damageClass === 'physical' ? attacker.actualStats.attack : attacker.actualStats.spAtk,
+    atkStage
+  );
+  let D = getStatWithStage(
+    move.damageClass === 'physical' ? defender.actualStats.defense : defender.actualStats.spDef,
+    defStage
+  );
 
   // Burn reduces physical attack by 50%
   if (attacker.status === 'BRN' && move.damageClass === 'physical') {

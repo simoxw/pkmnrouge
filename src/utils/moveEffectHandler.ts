@@ -1,5 +1,6 @@
 import { BattlePokemon, Move, Type, StatusCondition, Stats } from '../types';
 import { getTypeEffectiveness } from '../battleLogic';
+import { getStatWithStage } from './battleMechanics';
 
 export enum MoveCategory {
   DAMAGE = 'damage',
@@ -27,11 +28,22 @@ export class MoveEffectHandler {
     // Status moves (no damage)
     if (move.damageClass === 'status') {
       if (move.statChanges && move.statChanges.length > 0) {
-        // Check if it's buff or debuff based on target
-        const hasBuff = move.statChanges.some(sc => sc.change > 0 && move.target === 'user');
-        const hasDebuff = move.statChanges.some(sc => sc.change < 0 && move.target !== 'user');
-        if (hasBuff) return MoveCategory.STAT_BUFF;
-        if (hasDebuff) return MoveCategory.STAT_DEBUFF;
+        // Guarda il segno del change, non move.target rigidamente
+        const hasBuff = move.statChanges.some(sc => sc.change > 0);
+        const hasDebuff = move.statChanges.some(sc => sc.change < 0);
+        
+        // Se ha buff positivi, probabilmente è un buff a se stesso
+        if (hasBuff && !hasDebuff) {
+          return MoveCategory.STAT_BUFF;
+        }
+        // Se ha debuff negativi, è un debuff all'avversario
+        if (hasDebuff && !hasBuff) {
+          return MoveCategory.STAT_DEBUFF;
+        }
+        // Se ha entrambi, trattalo come debuff (il negativo avrà priorità)
+        if (hasDebuff) {
+          return MoveCategory.STAT_DEBUFF;
+        }
       }
       if (move.ailment) {
         return MoveCategory.STATUS_ONLY;
@@ -126,10 +138,11 @@ export class MoveEffectHandler {
 
     if (move.statChanges) {
       move.statChanges.forEach(sc => {
-        statChanges.push({ ...sc, target: 'user' });
+        // I buff vanno sempre su se stesso (user)
+        statChanges.push({ ...sc, target: 'user', change: Math.abs(sc.change) });
         const statName = this.getStatDisplayName(sc.stat);
-        const changeText = sc.change > 0 ? 'aumentato' : 'diminuito';
-        messages.push(`${statName} di ${attacker.name} è ${changeText}!`);
+        const changeStages = Math.abs(sc.change);
+        messages.push(`${statName} di ${attacker.name} è aumentato di ${changeStages} ${changeStages === 1 ? 'stadio' : 'stadi'}!`);
       });
     }
 
@@ -142,10 +155,11 @@ export class MoveEffectHandler {
 
     if (move.statChanges) {
       move.statChanges.forEach(sc => {
-        statChanges.push({ ...sc, target: 'opponent' });
+        // I debuff vanno sull'avversario (opponent)
+        statChanges.push({ ...sc, target: 'opponent', change: -Math.abs(sc.change) });
         const statName = this.getStatDisplayName(sc.stat);
-        const changeText = sc.change > 0 ? 'aumentato' : 'diminuito';
-        messages.push(`${statName} di ${defender.name} è ${changeText}!`);
+        const changeStages = Math.abs(sc.change);
+        messages.push(`${statName} di ${defender.name} è diminuito di ${changeStages} ${changeStages === 1 ? 'stadio' : 'stadi'}!`);
       });
     }
 
@@ -160,7 +174,9 @@ export class MoveEffectHandler {
       if (Math.random() * 100 < chance) {
         const status = this.mapAilmentToStatus(move.ailment);
         if (status) {
-          const target = move.target === 'user' ? 'user' : 'opponent';
+          // Determina il target: se target contiene "self" o "user", è su se stesso, altrimenti sull'avversario
+          const targetIsSelf = move.target === 'user' || move.target === 'self';
+          const target = targetIsSelf ? 'user' : 'opponent';
           const targetName = target === 'user' ? attacker.name : defender.name;
           messages.push(`${targetName} è ${this.getStatusDisplayText(status)}!`);
           return {
@@ -169,7 +185,7 @@ export class MoveEffectHandler {
           };
         }
       } else {
-        messages.push(`${attacker.name} ha fallito!`);
+        messages.push(`L'attacco di ${attacker.name} ha fallito!`);
       }
     }
 
@@ -224,18 +240,25 @@ export class MoveEffectHandler {
 
     const level = attacker.level || 50;
 
-    // Get attack and defense based on damage class
+    // Get attack and defense based on damage class, applicando i stage multipliers
+    const atkStage = move.damageClass === 'physical'
+      ? (attacker.statStages?.attack ?? 0)
+      : (attacker.statStages?.spAtk ?? 0);
+    const defStage = move.damageClass === 'physical'
+      ? (defender.statStages?.defense ?? 0)
+      : (defender.statStages?.spDef ?? 0);
+
     let A: number, D: number;
     if (move.damageClass === 'physical') {
-      A = attacker.actualStats.attack;
-      D = defender.actualStats.defense;
+      A = getStatWithStage(attacker.actualStats.attack, atkStage);
+      D = getStatWithStage(defender.actualStats.defense, defStage);
       // Burn reduces physical attack
       if (attacker.status === 'BRN') {
         A = Math.floor(A / 2);
       }
     } else {
-      A = attacker.actualStats.spAtk;
-      D = defender.actualStats.spDef;
+      A = getStatWithStage(attacker.actualStats.spAtk, atkStage);
+      D = getStatWithStage(defender.actualStats.spDef, defStage);
     }
 
     const baseDamage = (((2 * level / 5 + 2) * move.power * (A / D)) / 50 + 2);
@@ -384,15 +407,12 @@ export class MoveEffectHandler {
     };
   }
 
-  // Apply status effects to stats
+  // Apply status effects (checks only, non modifica le stats permanenti)
+  // La paralisi riduce la velocità al momento del calcolo, non modifica actualStats
   static applyStatusEffects(pokemon: BattlePokemon): Stats {
-    const stats = { ...pokemon.actualStats };
-
-    if (pokemon.status === 'PAR') {
-      stats.speed = Math.floor(stats.speed / 2);
-    }
-
-    return stats;
+    // Ritorna le stat attuali senza mutazioni - gli speed stages vengono applicati
+    // al momento del calcolo della velocità in BattleEngine tramite getStatWithStage
+    return { ...pokemon.actualStats };
   }
 
   // Apply end of turn effects (damage from status conditions)

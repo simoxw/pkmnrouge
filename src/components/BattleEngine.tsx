@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BattlePokemon, Move, BattleLog, InventoryItem } from '../types';
 import { getTypeEffectiveness } from '../battleLogic';
+import { getStatWithStage } from '../utils/battleMechanics';
 import { MoveEffectHandler } from '../utils/moveEffectHandler';
 import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
@@ -33,7 +34,11 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     statStages: enemyTeam[0].statStages || { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
   });
   const [logs, setLogs] = useState<BattleLog[]>([]);
-  const [isPlayerTurn, setIsPlayerTurn] = useState(player.actualStats.speed >= enemyTeam[0].actualStats.speed);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(() => {
+    const playerSpeed = getStatWithStage(initialPlayer.actualStats.speed, initialPlayer.statStages?.speed ?? 0);
+    const enemySpeed = getStatWithStage(enemyTeam[0].actualStats.speed, enemyTeam[0].statStages?.speed ?? 0);
+    return playerSpeed >= enemySpeed;
+  });
   const [isBattleOver, setIsBattleOver] = useState(false);
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const [showBagMenu, setShowBagMenu] = useState(false);
@@ -176,20 +181,15 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       addLog(`${player.name} ha recuperato ${effectResult.healing} HP!`, 'status');
     }
 
-    // Apply stat changes
-    let newEnemyStats = { ...enemy.actualStats };
-    let newPlayerStats = { ...player.actualStats };
+    // Apply stat changes - NON mutare actualStats, usa soli statStages
     let newEnemyStages = { ...enemy.statStages };
     let newPlayerStages = { ...player.statStages };
 
     if (effectResult.statChanges) {
       effectResult.statChanges.forEach(sc => {
-        const multiplier = sc.change > 0 ? 1.5 : 0.66;
         if (sc.target === 'user') {
-          newPlayerStats[sc.stat] = Math.floor(newPlayerStats[sc.stat] * multiplier);
           newPlayerStages[sc.stat] = Math.max(-6, Math.min(6, (newPlayerStages[sc.stat] || 0) + sc.change));
         } else {
-          newEnemyStats[sc.stat] = Math.floor(newEnemyStats[sc.stat] * multiplier);
           newEnemyStages[sc.stat] = Math.max(-6, Math.min(6, (newEnemyStages[sc.stat] || 0) + sc.change));
         }
       });
@@ -222,7 +222,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       ...prev, 
       currentHp: newEnemyHp, 
       status: newEnemyStatus,
-      actualStats: MoveEffectHandler.applyStatusEffects({ ...prev, actualStats: newEnemyStats, status: newEnemyStatus }),
+      statStages: newEnemyStages,
       sleepTurns: newEnemyStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
 
@@ -230,7 +230,6 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       ...prev,
       currentHp: newPlayerHp,
       status: newPlayerStatus,
-      actualStats: MoveEffectHandler.applyStatusEffects({ ...prev, actualStats: newPlayerStats, status: newPlayerStatus }),
       statStages: newPlayerStages,
       sleepTurns: newPlayerStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
@@ -412,20 +411,15 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
     if (effectResult.damage && effectResult.damage > 0) addLog(`Danno ricevuto: ${effectResult.damage}`, 'damage');
 
-    // Apply stat changes
-    let newPlayerStats = { ...player.actualStats };
-    let newEnemyStats = { ...enemy.actualStats };
+    // Apply stat changes - NON mutare actualStats, usa soli statStages
     let newPlayerStages = { ...player.statStages };
     let newEnemyStages = { ...enemy.statStages };
 
     if (effectResult.statChanges) {
       effectResult.statChanges.forEach(sc => {
-        const multiplier = sc.change > 0 ? 1.5 : 0.66;
         if (sc.target === 'user') {
-          newEnemyStats[sc.stat] = Math.floor(newEnemyStats[sc.stat] * multiplier);
           newEnemyStages[sc.stat] = Math.max(-6, Math.min(6, (newEnemyStages[sc.stat] || 0) + sc.change));
         } else {
-          newPlayerStats[sc.stat] = Math.floor(newPlayerStats[sc.stat] * multiplier);
           newPlayerStages[sc.stat] = Math.max(-6, Math.min(6, (newPlayerStages[sc.stat] || 0) + sc.change));
         }
       });
@@ -458,7 +452,6 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       ...prev, 
       currentHp: newPlayerHp, 
       status: newPlayerStatus,
-      actualStats: MoveEffectHandler.applyStatusEffects({ ...prev, actualStats: newPlayerStats, status: newPlayerStatus }),
       statStages: newPlayerStages,
       sleepTurns: newPlayerStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
@@ -466,7 +459,6 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     setEnemy(prev => ({
       ...prev,
       status: newEnemyStatus,
-      actualStats: MoveEffectHandler.applyStatusEffects({ ...prev, actualStats: newEnemyStats, status: newEnemyStatus }),
       statStages: newEnemyStages,
       sleepTurns: newEnemyStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
