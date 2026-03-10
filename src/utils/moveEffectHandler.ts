@@ -9,7 +9,9 @@ export enum MoveCategory {
   STAT_DEBUFF = 'stat_debuff',
   STATUS_ONLY = 'status_only',
   DAMAGE_STATUS = 'damage_status',
-  DAMAGE_DEBUFF = 'damage_debuff'
+  DAMAGE_DEBUFF = 'damage_debuff',
+  DRAIN = 'drain',
+  NO_EFFECT = 'no_effect'
 }
 
 export interface MoveEffectResult {
@@ -32,20 +34,33 @@ export class MoveEffectHandler {
         return hasPositive ? MoveCategory.STAT_BUFF : MoveCategory.STAT_DEBUFF;
       }
       if (move.ailment) return MoveCategory.STATUS_ONLY;
-      return MoveCategory.DAMAGE;
+      return MoveCategory.NO_EFFECT;
     }
     if (move.power > 0) {
+      if (this.isDrainMove(move)) return MoveCategory.DRAIN;
       if (move.ailment) return MoveCategory.DAMAGE_STATUS;
-      if (move.statChanges && move.statChanges.length > 0)
-        return MoveCategory.DAMAGE_DEBUFF;
+      if (move.statChanges && move.statChanges.length > 0) return MoveCategory.DAMAGE_DEBUFF;
       return MoveCategory.DAMAGE;
     }
-    return MoveCategory.DAMAGE;
+    return MoveCategory.NO_EFFECT;
   }
 
   private static isHealingMove(move: Move): boolean {
-    const healingMoves = ['Rest', 'Synthesis', 'Roost', 'Wish', 'Milk Drink', 'Soft-Boiled'];
-    return healingMoves.includes(move.name);
+    const healingMoveIds = [
+      'rest','recover','synthesis','roost','wish',
+      'milk-drink','soft-boiled','moonlight','morning-sun',
+      'slack-off','healing-wish','jungle-healing','life-dew',
+      'shore-up','strength-sap',
+    ];
+    return healingMoveIds.includes(move.id);
+  }
+
+  private static isDrainMove(move: Move): boolean {
+    const drainMoveIds = [
+      'absorb','mega-drain','giga-drain','leech-life',
+      'drain-punch','dream-eater','horn-leech','oblivion-wing',
+    ];
+    return drainMoveIds.includes(move.id);
   }
 
   static processMove(attacker: BattlePokemon, defender: BattlePokemon, move: Move): MoveEffectResult {
@@ -74,6 +89,12 @@ export class MoveEffectHandler {
       case MoveCategory.DAMAGE_DEBUFF:
         return this.processDamageDebuffMove(attacker, defender, move);
 
+      case MoveCategory.DRAIN:
+        return this.processDrainMove(attacker, defender, move);
+
+      case MoveCategory.NO_EFFECT:
+        return { messages: [`${attacker.name} usa ${move.name}... senza effetto!`] };
+
       default:
         return result;
     }
@@ -84,6 +105,23 @@ export class MoveEffectHandler {
     const result: MoveEffectResult = { ...dmgResult, messages: [] };
     result.messages.push(`${attacker.name} usa ${move.name}!`);
     return result;
+  }
+
+  private static processDrainMove(
+    attacker: BattlePokemon,
+    defender: BattlePokemon,
+    move: Move
+  ): MoveEffectResult {
+    const dmgResult = calculateDamage(attacker, defender, move);
+    const healing = Math.floor((dmgResult.damage || 0) / 2);
+    return {
+      ...dmgResult,
+      healing,
+      messages: [
+        `${attacker.name} usa ${move.name}!`,
+        healing > 0 ? `${attacker.name} ha assorbito ${healing} PS!` : '',
+      ].filter(Boolean),
+    };
   }
 
   private static processHealingMove(attacker: BattlePokemon, move: Move): MoveEffectResult {

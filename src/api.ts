@@ -30,6 +30,26 @@ const formatMove = (moveData: any): Move => {
   };
 };
 
+const EXCLUDED_MOVE_IDS = new Set([
+  'protect','detect','endure','quick-guard','wide-guard',
+  'substitute','splash','celebrate','hold-hands',
+  'confuse-ray','swagger','flatter','supersonic','teeter-dance',
+  'attract','captivate',
+  'sunny-day','rain-dance','sandstorm','hail','snow',
+  'spikes','stealth-rock','toxic-spikes','sticky-web',
+  'whirlwind','roar','circle-throw','dragon-tail',
+  'mean-look','block','spider-web',
+  'reflect','light-screen','aurora-veil','safeguard','mist',
+  'baton-pass','encore','taunt','torment','trick-room',
+  'perish-song','destiny-bond','spite','grudge',
+  'trick','switcheroo','skill-swap','worry-seed',
+  'stockpile','swallow','spit-up',
+  'conversion','conversion2','camouflage',
+  'lock-on','mind-reader','focus-energy',
+  'haze','belch','after-you','quash',
+  'bide','frustration',
+]);
+
 export async function fetchPokemonData(id: number): Promise<Pokemon> {
   const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
   const data = await response.json();
@@ -51,6 +71,7 @@ export async function fetchPokemonData(id: number): Promise<Pokemon> {
   // Fetch 4 random moves from the pokemon's move list
   const moves: Move[] = await Promise.all(
     data.moves
+      .filter((m: any) => !EXCLUDED_MOVE_IDS.has(m.move.name))
       .sort(() => 0.5 - Math.random())
       .slice(0, 4)
       .map(async (m: any) => {
@@ -78,7 +99,9 @@ export async function fetchNewMove(pokemonId: string, currentMoveIds: string[]):
 
   const pokemonTypes = data.types.map((t: any) => t.type.name);
   
-  const availableMoves = data.moves.filter((m: any) => !currentMoveIds.includes(m.move.name));
+  const availableMoves = data.moves.filter(
+    (m: any) => !currentMoveIds.includes(m.move.name) && !EXCLUDED_MOVE_IDS.has(m.move.name)
+  );
   if (availableMoves.length === 0) return null;
 
   // Try to find a move that matches one of the pokemon's types
@@ -110,6 +133,6 @@ export async function fetchNewMove(pokemonId: string, currentMoveIds: string[]):
 }
 
 export async function generateDraft(): Promise<Pokemon[]> {
-  const ids = Array.from({ length: 3 }, () => Math.floor(Math.random() * 493) + 1);
+  const ids = Array.from({ length: 3 }, () => Math.floor(Math.random() * 649) + 1);
   return Promise.all(ids.map(id => fetchPokemonData(id)));
 }

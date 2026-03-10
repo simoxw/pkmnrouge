@@ -47,6 +47,35 @@ Il progetto è stato refattorizzato e ottimizzato per mobile con tutte le seguen
 - `npm run build` ✔️
 - Nessun riferimento a `src/battle.ts` (non presente) ✔️
 
+## Aggiornamenti Generazione 5 (2026)
+
+### Supporto Pokémon Gen 5
+- **File**: `src/api.ts`
+- **Modifica**: Range draft esteso da 493 a 649 per includere Pokémon fino a Victini (Gen 5)
+- **Risultato**: Draft ora seleziona Pokémon dalla Gen 1 alla Gen 5
+
+### Filtro Mosse Inutilizzabili
+- **File**: `src/api.ts`
+- **Modifica**: Aggiunto `EXCLUDED_MOVE_IDS` con esclusione di mosse strategiche/status inutili (Protect, Roar, Substitute, ecc.)
+- **Aggiornamenti**: Aggiunti 'bide' (Pazienza) e 'frustration' (Frustrazione)
+- **Risultato**: Pokémon non ricevono più mosse come Protezione o Boato, migliorando il bilanciamento
+
+### Mosse Drain e Healing Corrette
+- **File**: `src/utils/moveEffectHandler.ts`
+- **Modifiche**:
+  - Aggiunto `MoveCategory.DRAIN` e `MoveCategory.NO_EFFECT`
+  - Aggiornato `isHealingMove()` e aggiunto `isDrainMove()` con ID corretti
+  - Implementato `processDrainMove()` per assorbire metà danno inflitto
+  - Aggiornati `categorizeMove()` e `processMove()` per gestire drain e no-effect
+- **Risultato**: Mosse come Assorbimento ora curano correttamente; mosse inutili mostrano "senza effetto"
+
+### Tipo Fairy Retroattivo
+- **File**: `src/types.ts`
+- **Modifica**: Aggiunto `FAIRY = 'Fairy'` all'enum Type
+- **File**: `src/constants.ts`
+- **Modifica**: Aggiornata `TYPE_CHART` con efficacie Fairy (debole a Steel/Poison, immune a Dragon)
+- **Risultato**: Pokémon Fairy (es. Clefable, Togekiss) ora hanno tipi e danni calcolati correttamente
+
 ## Note finali
 
 - Se il progetto si evolve, aggiornare prima `PROJECT_STRUCTURE.md`, poi `README.md` e `REFACTORING_COMPLETE.md`.

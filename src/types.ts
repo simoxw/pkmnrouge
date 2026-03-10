@@ -15,7 +15,8 @@ export enum Type {
   GHOST = 'Ghost',
   DRAGON = 'Dragon',
   STEEL = 'Steel',
-  DARK = 'Dark'
+  DARK = 'Dark',
+  FAIRY = 'Fairy'
 }
 
 export type DamageClass = 'physical' | 'special' | 'status';
