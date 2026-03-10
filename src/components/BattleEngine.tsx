@@ -16,10 +16,11 @@ interface BattleEngineProps {
   inventory: InventoryItem[];
   onBattleEnd: (winner: 'player' | 'enemy') => void;
   onSwitch: (index: number) => void;
+  onUpdatePartyMember: (index: number, updated: BattlePokemon) => void;
   onUseItem: (itemId: string, pokemonIndex: number) => string;
 }
 
-export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, onBattleEnd, onSwitch, onUseItem }: BattleEngineProps) {
+export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, onBattleEnd, onSwitch, onUpdatePartyMember, onUseItem }: BattleEngineProps) {
   const [player, setPlayer] = useState<BattlePokemon>({
     ...initialPlayer,
     status: initialPlayer.status || null,
@@ -37,14 +38,14 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const [showBagMenu, setShowBagMenu] = useState(false);
   const [selectedItemForPokemon, setSelectedItemForPokemon] = useState<string | null>(null);
-  const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy', text?: string } | null>(null);
+  const [activeEffect, setActiveEffect] = useState<{ type: string, side: 'player' | 'enemy' | 'center', text?: string } | null>(null);
   const [hoveredMove, setHoveredMove] = useState<Move | null>(null);
   const [lastEnemyMove, setLastEnemyMove] = useState<Move | null>(null);
 
   // sound effects
   const { playSound } = useSoundEffects(true);
 
-  const triggerEffect = (type: string, side: 'player' | 'enemy', text?: string) => {
+  const triggerEffect = (type: string, side: 'player' | 'enemy' | 'center', text?: string) => {
     setActiveEffect({ type, side, text });
     setTimeout(() => setActiveEffect(null), 1000);
   };
@@ -61,6 +62,23 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     playCry(player.cryUrl);
     setTimeout(() => playCry(enemy.cryUrl), 1000);
   }, []);
+
+  // Keep local player in sync with App party[0] after switches/updates.
+  useEffect(() => {
+    setPlayer({
+      ...initialPlayer,
+      status: initialPlayer.status || null,
+      statStages: initialPlayer.statStages || { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+    });
+  }, [initialPlayer.id]);
+
+  const commitPlayer = (updater: (prev: BattlePokemon) => BattlePokemon) => {
+    setPlayer(prev => {
+      const next = updater(prev);
+      onUpdatePartyMember(0, next);
+      return next;
+    });
+  };
 
   const addLog = (message: string, type: BattleLog['type'] = 'info') => {
     setLogs(prev => [{ id: Math.random().toString(), message, type }, ...prev].slice(0, 5));
@@ -84,7 +102,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
     // Handle status clearing
     if (turnResult.statusResult.statusCleared) {
-      setPlayer(prev => ({
+      commitPlayer(prev => ({
         ...prev,
         status: null,
         sleepTurns: undefined,
@@ -96,7 +114,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     if (!turnResult.statusResult.canAct) {
       // Handle sleep turns decrement
       if (player.status === 'SLP' && player.sleepTurns && player.sleepTurns > 0) {
-        setPlayer(prev => ({ ...prev, sleepTurns: (prev.sleepTurns || 1) - 1 }));
+        commitPlayer(prev => ({ ...prev, sleepTurns: (prev.sleepTurns || 1) - 1 }));
       }
       setIsPlayerTurn(false);
       return;
@@ -123,6 +141,21 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       }
 
       addLog(`Danno inflitto: ${effectResult.damage}`, 'damage');
+    }
+
+    // Effectiveness messages for PLAYER attacks should be readable on mobile:
+    // show them in the central message stream + an optional center pop.
+    if (effectResult.effectiveness && effectResult.effectiveness > 1) {
+      addLog('È superefficace!', 'status');
+      setTimeout(() => triggerEffect('supereffective', 'center', 'SUPEREFFICACE!'), 400);
+    }
+    if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
+      addLog('Non è molto efficace...', 'status');
+      setTimeout(() => triggerEffect('ineffective', 'center', 'POCO EFFICACE'), 400);
+    }
+    if (effectResult.effectiveness === 0) {
+      addLog('Non ha effetto...', 'status');
+      setTimeout(() => triggerEffect('no-effect', 'center', 'NESSUN EFFETTO'), 400);
     }
 
     // Apply healing
@@ -182,11 +215,12 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       sleepTurns: newEnemyStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
 
-    setPlayer(prev => ({
+    commitPlayer(prev => ({
       ...prev,
       currentHp: newPlayerHp,
       status: newPlayerStatus,
       actualStats: MoveEffectHandler.applyStatusEffects({ ...prev, actualStats: newPlayerStats, status: newPlayerStatus }),
+      statStages: newPlayerStages,
       sleepTurns: newPlayerStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
     }));
 
@@ -224,6 +258,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     addLog(`Rientra ${player.name}! Vai ${newActive.name}!`, 'info');
     
     // Update local state
+    onUpdatePartyMember(0, player); // ensure current active is persisted before swap
     setPlayer({ ...newActive });
     onSwitch(index);
     setShowSwitchMenu(false);
@@ -249,7 +284,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       const item = ITEMS.find(i => i.id === itemId);
       if (item) {
         const { updatedPokemon } = item.effect(player);
-        setPlayer(updatedPokemon);
+        commitPlayer(() => updatedPokemon);
       }
     }
 
@@ -393,7 +428,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       }
     }
 
-    setPlayer(prev => ({ 
+    commitPlayer(prev => ({ 
       ...prev, 
       currentHp: newPlayerHp, 
       status: newPlayerStatus,
@@ -434,7 +469,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     // Apply player effects
     if (playerEffects.damage > 0) {
       const newPlayerHp = Math.max(0, player.currentHp - playerEffects.damage);
-      setPlayer(prev => ({ ...prev, currentHp: newPlayerHp }));
+      commitPlayer(prev => ({ ...prev, currentHp: newPlayerHp }));
       playerEffects.messages.forEach(message => addLog(message, 'damage'));
 
       if (newPlayerHp === 0) {
@@ -613,7 +648,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         )}
 
         {/* Player Side */}
-        <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4">
+        <div className={`flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4 transition-transform
+          ${lastEnemyMove ? 'md:translate-y-10' : ''}`}>
           {activeEffect?.side === 'player' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -703,6 +739,29 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
           </motion.div>
         </div>
       </div>
+
+      {/* Center Effects (mobile-friendly) */}
+      {activeEffect?.side === 'center' && (
+        <div className="fixed inset-0 pointer-events-none z-[60] flex items-center justify-center">
+          <AnimatePresence>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1.1, opacity: 1 }}
+              exit={{ scale: 1.2, opacity: 0 }}
+              className="px-4 py-2 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-sm"
+            >
+              <div className={`text-lg md:text-2xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]
+                ${activeEffect.type === 'supereffective' ? 'text-amber-400' :
+                  activeEffect.type === 'ineffective' ? 'text-slate-300' :
+                  activeEffect.type === 'no-effect' ? 'text-slate-400' :
+                  activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
+              >
+                {activeEffect.text || ''}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Controls & Logs */}
       <div className="h-auto md:h-64 bg-slate-950 rounded-t-3xl p-3 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-3 md:gap-6 overflow-y-auto md:overflow-y-visible">

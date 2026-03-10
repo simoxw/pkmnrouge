@@ -111,9 +111,23 @@ export default function App() {
 
       const fetchedEnemies = await Promise.all(enemiesToFetch.map(async (id) => {
         const enemyData = await fetchPokemonData(id);
-        const actualStats = getActualStats(enemyData.baseStats, enemyLevel);
-        const hpMultiplier = isBossRoom ? 1.5 : 1;
-        const maxHp = Math.floor(actualStats.hp * hpMultiplier);
+        const baseActualStats = getActualStats(enemyData.baseStats, enemyLevel);
+
+        // Boss buffs must live on the instance created here (not recalculated on switches).
+        const scalingFactor = Math.floor((roomNumber - 1) / 10);
+        const bossHpMultiplier = isBossRoom ? (1.5 + scalingFactor * 0.1) : 1;
+        const bossStatMultiplier = isBossRoom ? (1.15 + scalingFactor * 0.05) : 1;
+
+        const actualStats = isBossRoom ? {
+          ...baseActualStats,
+          attack: Math.floor(baseActualStats.attack * bossStatMultiplier),
+          defense: Math.floor(baseActualStats.defense * bossStatMultiplier),
+          spAtk: Math.floor(baseActualStats.spAtk * bossStatMultiplier),
+          spDef: Math.floor(baseActualStats.spDef * bossStatMultiplier),
+          speed: Math.floor(baseActualStats.speed * bossStatMultiplier),
+        } : baseActualStats;
+
+        const maxHp = Math.floor(actualStats.hp * bossHpMultiplier);
         
         return {
           ...enemyData,
@@ -144,11 +158,21 @@ export default function App() {
 
   const handleSwitch = (index: number) => {
     if (index === 0 || index >= party.length) return;
+    if (party[index].currentHp <= 0) return;
     const newParty = [...party];
     const temp = newParty[0];
     newParty[0] = newParty[index];
     newParty[index] = temp;
     setParty(newParty);
+  };
+
+  const handleUpdatePartyMember = (index: number, updated: BattlePokemon) => {
+    setParty(prev => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = updated;
+      return next;
+    });
   };
 
   const handleBattleEnd = async (winner: 'player' | 'enemy') => {
@@ -387,6 +411,7 @@ export default function App() {
           inventory={inventory}
           onBattleEnd={handleBattleEnd} 
           onSwitch={handleSwitch}
+          onUpdatePartyMember={handleUpdatePartyMember}
           onUseItem={handleUseItem}
         />
       )}
