@@ -42,6 +42,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   const [hoveredMove, setHoveredMove] = useState<Move | null>(null);
   const [lastEnemyMove, setLastEnemyMove] = useState<Move | null>(null);
   const [playerEffectivenessMessage, setPlayerEffectivenessMessage] = useState<string | null>(null);
+  const [enemyEffectivenessMessage, setEnemyEffectivenessMessage] = useState<string | null>(null);
 
   // sound effects
   const { playSound } = useSoundEffects(true);
@@ -94,6 +95,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
   const handleMove = (move: Move) => {
     if (!isPlayerTurn || isBattleOver) return;
+
+    // Clear previous effectiveness messages
+    setPlayerEffectivenessMessage(null);
+    setEnemyEffectivenessMessage(null);
 
     // Process the turn including status checks and move effects
     const turnResult = MoveEffectHandler.processTurn(player, enemy, move);
@@ -149,16 +154,19 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       const msg = 'È superefficace!';
       setPlayerEffectivenessMessage(msg);
       addLog(msg, 'status');
+      setTimeout(() => setPlayerEffectivenessMessage(null), 2000);
     }
     if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
       const msg = 'Non è molto efficace...';
       setPlayerEffectivenessMessage(msg);
       addLog(msg, 'status');
+      setTimeout(() => setPlayerEffectivenessMessage(null), 2000);
     }
     if (effectResult.effectiveness === 0) {
       const msg = 'Non ha effetto...';
       setPlayerEffectivenessMessage(msg);
       addLog(msg, 'status');
+      setTimeout(() => setPlayerEffectivenessMessage(null), 2000);
     }
 
     // Apply healing
@@ -239,6 +247,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         setEnemyIndex(nextIndex);
         setEnemy(nextEnemy);
         setLastEnemyMove(null); // Reset last move when enemy changes
+        setPlayerEffectivenessMessage(null);
+        setEnemyEffectivenessMessage(null);
         addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
         playCry(nextEnemy.cryUrl);
         setIsPlayerTurn(false); // Enemy switch takes turn or just gives initiative to player? Usually player continues if they outspeed.
@@ -298,6 +308,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
   const enemyTurn = () => {
     if (isBattleOver) return;
+
+    // Clear previous effectiveness messages
+    setPlayerEffectivenessMessage(null);
+    setEnemyEffectivenessMessage(null);
 
     // Improved AI: Prefer moves that are super effective against player
     const availableMoves = enemy.moves.filter(m => m.power > 0); // Only damaging moves for simplicity
@@ -375,15 +389,24 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     }
     
     if (effectResult.effectiveness && effectResult.effectiveness > 1) {
-      addLog('È superefficace!', 'status');
+      const msg = 'È superefficace!';
+      setEnemyEffectivenessMessage(msg);
+      addLog(msg, 'status');
+      setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
       setTimeout(() => triggerEffect('supereffective', 'player', 'SUPEREFFICACE!'), 500);
     }
     if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
-      addLog('Non è molto efficace...', 'status');
+      const msg = 'Non è molto efficace...';
+      setEnemyEffectivenessMessage(msg);
+      addLog(msg, 'status');
+      setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
       setTimeout(() => triggerEffect('ineffective', 'player', 'NON EFFICACE'), 500);
     }
     if (effectResult.effectiveness === 0) {
-      addLog('Non ha effetto...', 'status');
+      const msg = 'Non ha effetto...';
+      setEnemyEffectivenessMessage(msg);
+      addLog(msg, 'status');
+      setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
       setTimeout(() => triggerEffect('no-effect', 'player', 'NESSUN EFFETTO'), 500);
     }
 
@@ -508,6 +531,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
           setEnemyIndex(nextIndex);
           setEnemy(nextEnemy);
           setLastEnemyMove(null); // Reset last move when enemy changes
+          setPlayerEffectivenessMessage(null);
+          setEnemyEffectivenessMessage(null);
           addLog(`Il Boss manda in campo ${nextEnemy.name}!`, 'info');
           playCry(nextEnemy.cryUrl);
         } else {
@@ -534,7 +559,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       {/* Battle Arena */}
       <div className="flex-1 flex flex-col justify-start md:justify-between relative overflow-hidden gap-1 md:gap-4">
         {/* Enemy Side */}
-        <div className="flex justify-end items-start p-1 md:p-4 relative">
+        <div className="flex justify-end items-start p-1 md:p-4 relative flex-shrink-0">
           {activeEffect?.side === 'enemy' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -625,38 +650,40 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         </div>
 
         {/* Last Move Indicator */}
-        {lastEnemyMove && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col justify-center items-center py-2 space-y-1"
-          >
-            <div className="text-center text-xs md:text-sm font-bold text-indigo-300 bg-slate-800/60 px-4 py-2 rounded-lg border border-indigo-500/30">
-              Ultima mossa nemico: <span className="text-indigo-400">{lastEnemyMove.name}</span>
-            </div>
-            {/* Recent battle messages */}
-            {logs.slice(0, 2).map((log, index) => (
-              <motion.div
-                key={log.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className={`text-center text-xs px-3 py-1 rounded border ${
-                  log.type === 'damage' ? 'text-rose-300 bg-rose-900/40 border-rose-500/30' :
-                  log.type === 'status' ? 'text-amber-300 bg-amber-900/40 border-amber-500/30' :
-                  log.type === 'victory' ? 'text-emerald-300 bg-emerald-900/40 border-emerald-500/30' :
-                  log.type === 'defeat' ? 'text-red-300 bg-red-900/40 border-red-500/30' :
-                  'text-slate-300 bg-slate-800/40 border-slate-500/30'
-                }`}
-              >
-                {log.message}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+        <div className="flex-1 min-h-0 overflow-y-auto flex items-start justify-center md:justify-center">
+          {lastEnemyMove && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col justify-center items-center py-2 space-y-1"
+            >
+              <div className="text-center text-xs md:text-sm font-bold text-indigo-300 bg-slate-800/60 px-4 py-2 rounded-lg border border-indigo-500/30">
+                Ultima mossa nemico: <span className="text-indigo-400">{lastEnemyMove.name}</span>
+              </div>
+              {/* Recent battle messages */}
+              {logs.slice(0, 2).map((log, index) => (
+                <motion.div
+                  key={log.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`text-center text-xs px-3 py-1 rounded border ${
+                    log.type === 'damage' ? 'text-rose-300 bg-rose-900/40 border-rose-500/30' :
+                    log.type === 'status' ? 'text-amber-300 bg-amber-900/40 border-amber-500/30' :
+                    log.type === 'victory' ? 'text-emerald-300 bg-emerald-900/40 border-emerald-500/30' :
+                    log.type === 'defeat' ? 'text-red-300 bg-red-900/40 border-red-500/30' :
+                    'text-slate-300 bg-slate-800/40 border-slate-500/30'
+                  }`}
+                >
+                  {log.message}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
 
         {/* Player Side */}
-        <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4">
+        <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4 flex-shrink-0">
           {activeEffect?.side === 'player' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -725,6 +752,11 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <div className="text-right text-[10px] md:text-xs mt-0.5 md:mt-1 font-mono">
               {player.currentHp} / {player.maxHp} HP
             </div>
+            {enemyEffectivenessMessage && (
+              <div className="mt-1 text-center text-[10px] md:text-xs font-bold px-2 py-1 rounded-full bg-slate-900/70 border border-white/10 text-amber-300">
+                {enemyEffectivenessMessage}
+              </div>
+            )}
             <StatStagesBadges pokemon={player} />
             
             {/* Party Status */}
