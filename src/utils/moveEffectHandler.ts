@@ -25,47 +25,22 @@ export interface MoveEffectResult {
 
 export class MoveEffectHandler {
   static categorizeMove(move: Move): MoveCategory {
-    // Status moves (no damage)
     if (move.damageClass === 'status') {
+      if (this.isHealingMove(move)) return MoveCategory.HEALING;
       if (move.statChanges && move.statChanges.length > 0) {
-        // Guarda il segno del change, non move.target rigidamente
-        const hasBuff = move.statChanges.some(sc => sc.change > 0);
-        const hasDebuff = move.statChanges.some(sc => sc.change < 0);
-
-        // Se ha buff positivi, probabilmente è un buff a se stesso
-        if (hasBuff && !hasDebuff) {
-          return MoveCategory.STAT_BUFF;
-        }
-        // Se ha debuff negativi, è un debuff all'avversario
-        if (hasDebuff && !hasBuff) {
-          return MoveCategory.STAT_DEBUFF;
-        }
-        // Se ha entrambi, trattalo come debuff (il negativo avrà priorità)
-        if (hasDebuff) {
-          return MoveCategory.STAT_DEBUFF;
-        }
+        const hasPositive = move.statChanges.some(sc => sc.change > 0);
+        return hasPositive ? MoveCategory.STAT_BUFF : MoveCategory.STAT_DEBUFF;
       }
-      if (move.ailment) {
-        return MoveCategory.STATUS_ONLY;
-      }
-      // Healing moves
-      if (this.isHealingMove(move)) {
-        return MoveCategory.HEALING;
-      }
-    }
-
-    // Damage moves with additional effects
-    if (move.damageClass !== 'status' && move.power > 0) {
-      if (move.ailment) {
-        return MoveCategory.DAMAGE_STATUS;
-      }
-      if (move.statChanges && move.statChanges.length > 0) {
-        return MoveCategory.DAMAGE_DEBUFF;
-      }
+      if (move.ailment) return MoveCategory.STATUS_ONLY;
       return MoveCategory.DAMAGE;
     }
-
-    return MoveCategory.DAMAGE; // fallback
+    if (move.power > 0) {
+      if (move.ailment) return MoveCategory.DAMAGE_STATUS;
+      if (move.statChanges && move.statChanges.length > 0)
+        return MoveCategory.DAMAGE_DEBUFF;
+      return MoveCategory.DAMAGE;
+    }
+    return MoveCategory.DAMAGE;
   }
 
   private static isHealingMove(move: Move): boolean {
