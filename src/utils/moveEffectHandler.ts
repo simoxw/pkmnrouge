@@ -1,6 +1,6 @@
 import { BattlePokemon, Move, Type, StatusCondition, Stats } from '../types';
 import { getTypeEffectiveness } from '../battleLogic';
-import { getStatWithStage } from './battleMechanics';
+import { getStatWithStage, calculateDamage } from './battleMechanics';
 
 export enum MoveCategory {
   DAMAGE = 'damage',
@@ -31,7 +31,7 @@ export class MoveEffectHandler {
         // Guarda il segno del change, non move.target rigidamente
         const hasBuff = move.statChanges.some(sc => sc.change > 0);
         const hasDebuff = move.statChanges.some(sc => sc.change < 0);
-        
+
         // Se ha buff positivi, probabilmente è un buff a se stesso
         if (hasBuff && !hasDebuff) {
           return MoveCategory.STAT_BUFF;
@@ -105,7 +105,8 @@ export class MoveEffectHandler {
   }
 
   private static processDamageMove(attacker: BattlePokemon, defender: BattlePokemon, move: Move): MoveEffectResult {
-    const result = this.calculateDamage(attacker, defender, move);
+    const dmgResult = calculateDamage(attacker, defender, move);
+    const result: MoveEffectResult = { ...dmgResult, messages: [] };
     result.messages.push(`${attacker.name} usa ${move.name}!`);
     return result;
   }
@@ -166,6 +167,20 @@ export class MoveEffectHandler {
     return { statChanges, messages };
   }
 
+  private static isImmuneToStatus(
+    pokemon: BattlePokemon,
+    status: StatusCondition
+  ): boolean {
+    switch (status) {
+      case 'BRN': return pokemon.types.includes(Type.FIRE);
+      case 'PAR': return pokemon.types.includes(Type.ELECTRIC);
+      case 'FRZ': return pokemon.types.includes(Type.ICE);
+      case 'PSN': return pokemon.types.includes(Type.POISON)
+        || pokemon.types.includes(Type.STEEL);
+      default: return false;
+    }
+  }
+
   private static processStatusOnlyMove(attacker: BattlePokemon, defender: BattlePokemon, move: Move): MoveEffectResult {
     const messages: string[] = [`${attacker.name} usa ${move.name}!`];
 
@@ -178,6 +193,13 @@ export class MoveEffectHandler {
           const targetIsSelf = move.target === 'user' || move.target === 'self';
           const target = targetIsSelf ? 'user' : 'opponent';
           const targetName = target === 'user' ? attacker.name : defender.name;
+          const targetPokemon = target === 'user' ? attacker : defender;
+
+          if (this.isImmuneToStatus(targetPokemon, status)) {
+            messages.push(`Non ha effetto su ${targetPokemon.name}!`);
+            return { messages };
+          }
+
           messages.push(`${targetName} è ${this.getStatusDisplayText(status)}!`);
           return {
             statusApplied: { status, target },
@@ -193,7 +215,8 @@ export class MoveEffectHandler {
   }
 
   private static processDamageStatusMove(attacker: BattlePokemon, defender: BattlePokemon, move: Move): MoveEffectResult {
-    const result = this.calculateDamage(attacker, defender, move);
+    const dmgResult = calculateDamage(attacker, defender, move);
+    const result: MoveEffectResult = { ...dmgResult, messages: [] };
     result.messages.push(`${attacker.name} usa ${move.name}!`);
 
     // Chance to apply status
@@ -202,6 +225,10 @@ export class MoveEffectHandler {
       if (Math.random() * 100 < chance) {
         const status = this.mapAilmentToStatus(move.ailment);
         if (status) {
+          if (this.isImmuneToStatus(defender, status)) {
+            // Se immune, non aggiungiamo lo status e non diamo messaggi (solitamente silenzioso in damage+status)
+            return result;
+          }
           result.messages.push(`${defender.name} è ${this.getStatusDisplayText(status)}!`);
           result.statusApplied = { status, target: 'opponent' };
         }
@@ -212,7 +239,8 @@ export class MoveEffectHandler {
   }
 
   private static processDamageDebuffMove(attacker: BattlePokemon, defender: BattlePokemon, move: Move): MoveEffectResult {
-    const result = this.calculateDamage(attacker, defender, move);
+    const dmgResult = calculateDamage(attacker, defender, move);
+    const result: MoveEffectResult = { ...dmgResult, messages: [] };
     result.messages.push(`${attacker.name} usa ${move.name}!`);
 
     // Chance to apply stat debuff
@@ -232,77 +260,6 @@ export class MoveEffectHandler {
     return result;
   }
 
-  private static calculateDamage(attacker: BattlePokemon, defender: BattlePokemon, move: Move): MoveEffectResult {
-    // Check accuracy
-    if (Math.random() * 100 > move.accuracy) {
-      return { isMiss: true, messages: [`L'attacco di ${attacker.name} è fallito!`] };
-    }
-
-    const level = attacker.level || 50;
-
-    // Get attack and defense based on damage class, applicando i stage multipliers
-    const atkStage = move.damageClass === 'physical'
-      ? (attacker.statStages?.attack ?? 0)
-      : (attacker.statStages?.spAtk ?? 0);
-    const defStage = move.damageClass === 'physical'
-      ? (defender.statStages?.defense ?? 0)
-      : (defender.statStages?.spDef ?? 0);
-
-    let A: number, D: number;
-    if (move.damageClass === 'physical') {
-      A = getStatWithStage(attacker.actualStats.attack, atkStage);
-      D = getStatWithStage(defender.actualStats.defense, defStage);
-      // Burn reduces physical attack
-      if (attacker.status === 'BRN') {
-        A = Math.floor(A / 2);
-      }
-    } else {
-      A = getStatWithStage(attacker.actualStats.spAtk, atkStage);
-      D = getStatWithStage(defender.actualStats.spDef, defStage);
-    }
-
-    const baseDamage = (((2 * level / 5 + 2) * move.power * (A / D)) / 50 + 2);
-
-    // Random multiplier (0.85-1.0)
-    const random = 0.85 + Math.random() * 0.15;
-
-    // STAB (Same Type Attack Bonus)
-    const stab = attacker.types.includes(move.type) ? 1.5 : 1;
-
-    // Type effectiveness
-    let effectiveness = 1;
-    defender.types.forEach(type => {
-      effectiveness *= getTypeEffectiveness(move.type, type);
-    });
-
-    // Critical hit (6.25% chance)
-    const isCritical = Math.random() < 0.0625;
-    const critMultiplier = isCritical ? 2 : 1;
-
-    const finalDamage = Math.floor(baseDamage * random * stab * effectiveness * critMultiplier);
-
-    const result: MoveEffectResult = {
-      damage: finalDamage,
-      effectiveness,
-      isCritical,
-      messages: []
-    };
-
-    // Add effectiveness messages
-    if (effectiveness > 1) {
-      result.messages.push('È superefficace!');
-    } else if (effectiveness < 1 && effectiveness > 0) {
-      result.messages.push('Non è molto efficace...');
-    } else if (effectiveness === 0) {
-      result.messages.push('Non ha effetto...');
-    }
-
-    if (isCritical) {
-      result.messages.push('Brutto colpo!');
-    }
-
-    return result;
-  }
 
   private static mapAilmentToStatus(ailment: string): StatusCondition | null {
     const statusMap: Record<string, StatusCondition> = {
@@ -380,30 +337,30 @@ export class MoveEffectHandler {
   }
 
   // Process a turn for a pokemon, including status checks and move execution
-  static processTurn(attacker: BattlePokemon, defender: BattlePokemon, move: Move): { 
-    effectResult?: MoveEffectResult; 
-    statusResult: { canAct: boolean; messages: string[]; statusCleared?: boolean } 
+  static processTurn(attacker: BattlePokemon, defender: BattlePokemon, move: Move): {
+    effectResult?: MoveEffectResult;
+    statusResult: { canAct: boolean; messages: string[]; statusCleared?: boolean }
   } {
     const statusCheck = this.canAct(attacker);
-    
+
     if (!statusCheck.canAct) {
       return { statusResult: { ...statusCheck, statusCleared: false } };
     }
 
     // Clear status if applicable (waking up, thawing)
-    const statusCleared = statusCheck.messages.some(msg => 
+    const statusCleared = statusCheck.messages.some(msg =>
       msg.includes('svegliato') || msg.includes('scongelato')
     );
 
     const effectResult = this.processMove(attacker, defender, move);
-    
-    return { 
-      effectResult, 
-      statusResult: { 
-        canAct: true, 
+
+    return {
+      effectResult,
+      statusResult: {
+        canAct: true,
         messages: statusCheck.messages,
-        statusCleared 
-      } 
+        statusCleared
+      }
     };
   }
 
@@ -421,7 +378,7 @@ export class MoveEffectHandler {
     const messages: string[] = [];
 
     if (pokemon.status === 'PSN' || pokemon.status === 'BRN') {
-      damage = Math.max(1, Math.floor(pokemon.maxHp / 16));
+      damage = Math.max(1, Math.floor(pokemon.maxHp / 8));
       const statusText = pokemon.status === 'PSN' ? 'veleno' : 'scottatura';
       messages.push(`Il ${statusText} danneggia ${pokemon.name}!`);
     }

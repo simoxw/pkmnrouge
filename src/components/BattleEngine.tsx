@@ -132,7 +132,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     }
 
     const effectResult = turnResult.effectResult!;
-    
+
     // Decrement PP
     const moveIndex = player.moves.findIndex(m => m.id === move.id);
     if (moveIndex !== -1) {
@@ -226,10 +226,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         }
       }
     }
-    
-    setEnemy(prev => ({ 
-      ...prev, 
-      currentHp: newEnemyHp, 
+
+    setEnemy(prev => ({
+      ...prev,
+      currentHp: newEnemyHp,
       status: newEnemyStatus,
       statStages: newEnemyStages,
       sleepTurns: newEnemyStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
@@ -247,8 +247,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       if (enemyIndex < enemyTeam.length - 1) {
         addLog(`${enemy.name} nemico è esausto!`, 'status');
         const nextIndex = enemyIndex + 1;
-        const nextEnemy = { 
-          ...enemyTeam[nextIndex], 
+        const nextEnemy = {
+          ...enemyTeam[nextIndex],
           status: null,
           statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
         };
@@ -274,16 +274,16 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
   const handleSwitch = (index: number, isForced: boolean = false) => {
     if (index === 0 || party[index].currentHp <= 0) return;
-    
+
     const newActive = party[index];
     addLog(`Rientra ${player.name}! Vai ${newActive.name}!`, 'info');
-    
+
     // Update local state
     onUpdatePartyMember(0, player); // ensure current active is persisted before swap
     setPlayer({ ...newActive });
     onSwitch(index);
     setShowSwitchMenu(false);
-    
+
     // Switching consumes turn UNLESS it was forced by a faint
     if (!isForced) {
       setIsPlayerTurn(false);
@@ -295,7 +295,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   const handleUseItemInBattle = (itemId: string, pokemonIndex: number) => {
     const message = onUseItem(itemId, pokemonIndex);
     addLog(message, 'status');
-    
+
     // Update local state if used on active pokemon
     if (pokemonIndex === 0) {
       const updatedPkmn = party[0]; // App.tsx already updated it
@@ -324,23 +324,23 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     // Improved AI: Prefer moves that are super effective against player
     const availableMoves = enemy.moves.filter(m => m.power > 0); // Only damaging moves for simplicity
     let movePool: Move[] = [];
-    
+
     availableMoves.forEach(move => {
       let effectiveness = 1;
       player.types.forEach(type => {
         effectiveness *= getTypeEffectiveness(move.type, type);
       });
-      
+
       // Weight: super effective moves get 3x chance, normal 1x, not very effective 0.5x
       const weight = effectiveness > 1 ? 3 : effectiveness < 1 ? 0.5 : 1;
       for (let i = 0; i < weight; i++) {
         movePool.push(move);
       }
     });
-    
+
     // If no moves available (shouldn't happen), fallback to random
     const move = movePool.length > 0 ? movePool[Math.floor(Math.random() * movePool.length)] : enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
-    
+
     setLastEnemyMove(move);
 
     // Process the turn including status checks and move effects
@@ -395,7 +395,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       newEnemyHp = Math.min(enemy.maxHp, enemy.currentHp + effectResult.healing);
       addLog(`${enemy.name} nemico ha recuperato ${effectResult.healing} HP!`, 'status');
     }
-    
+
     if (effectResult.effectiveness && effectResult.effectiveness > 1) {
       const msg = 'È superefficace!';
       setEnemyEffectivenessMessage(msg);
@@ -457,9 +457,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       }
     }
 
-    commitPlayer(prev => ({ 
-      ...prev, 
-      currentHp: newPlayerHp, 
+    commitPlayer(prev => ({
+      ...prev,
+      currentHp: newPlayerHp,
       status: newPlayerStatus,
       statStages: newPlayerStages,
       sleepTurns: newPlayerStatus === 'SLP' ? Math.floor(Math.random() * 3) + 1 : undefined
@@ -524,8 +524,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         if (enemyIndex < enemyTeam.length - 1) {
           addLog(`${enemy.name} nemico è esausto per lo stato!`, 'status');
           const nextIndex = enemyIndex + 1;
-          const nextEnemy = { 
-            ...enemyTeam[nextIndex], 
+          const nextEnemy = {
+            ...enemyTeam[nextIndex],
             status: null,
             statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
           };
@@ -572,9 +572,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 >
                   {activeEffect.text && (
                     <div className={`text-2xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]
-                      ${activeEffect.type === 'supereffective' ? 'text-amber-400' : 
-                        activeEffect.type === 'ineffective' ? 'text-slate-400' : 
-                        activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
+                      ${activeEffect.type === 'supereffective' ? 'text-amber-400' :
+                        activeEffect.type === 'ineffective' ? 'text-slate-400' :
+                          activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
                     >
                       {activeEffect.text}
                     </div>
@@ -588,7 +588,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               </AnimatePresence>
             </div>
           )}
-          <motion.div 
+          <motion.div
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className="bg-slate-800/80 p-2 md:p-4 rounded-2xl border border-white/10 w-52 md:w-64 shadow-xl text-xs md:text-base"
@@ -598,10 +598,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 <span className="font-bold text-base md:text-lg truncate">{enemy.name}</span>
                 {enemy.status && (
                   <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
-                    ${enemy.status === 'PAR' ? 'bg-amber-400' : 
+                    ${enemy.status === 'PAR' ? 'bg-amber-400' :
                       enemy.status === 'BRN' ? 'bg-rose-500' :
-                      enemy.status === 'PSN' ? 'bg-purple-500' :
-                      enemy.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
+                        enemy.status === 'PSN' ? 'bg-purple-500' :
+                          enemy.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
                   >
                     {enemy.status}
                   </span>
@@ -612,9 +612,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 {enemyTeam.length > 1 && (
                   <div className="flex gap-0.5 mt-0.5">
                     {enemyTeam.map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${i === enemyIndex ? 'bg-rose-500' : i < enemyIndex ? 'bg-slate-600' : 'bg-slate-400/30'}`} 
+                      <div
+                        key={i}
+                        className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${i === enemyIndex ? 'bg-rose-500' : i < enemyIndex ? 'bg-slate-600' : 'bg-slate-400/30'}`}
                       />
                     ))}
                   </div>
@@ -622,7 +622,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               </div>
             </div>
             <div className="h-2 md:h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
-              <motion.div 
+              <motion.div
                 className={`h-full transition-colors duration-500 ${getHealthColor(enemy.currentHp, enemy.maxHp)}`}
                 initial={{ width: '100%' }}
                 animate={{ width: `${(enemy.currentHp / enemy.maxHp) * 100}%` }}
@@ -642,9 +642,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             animate={!isPlayerTurn ? { x: [-5, 5, -5] } : (activeEffect?.side === 'enemy' ? { x: [0, -10, 10, -10, 0], filter: ['brightness(1)', 'brightness(2)', 'brightness(1)'] } : {})}
             transition={activeEffect?.side === 'enemy' ? { duration: 0.2 } : { repeat: Infinity, duration: 0.5 }}
           >
-            <PokemonSprite 
-              id={enemy.id} 
-              name={enemy.name} 
+            <PokemonSprite
+              id={enemy.id}
+              name={enemy.name}
               className="w-34 h-34 md:w-50 md:h-50 ml-1 md:ml-4"
             />
           </motion.div>
@@ -653,7 +653,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         {/* Last Move Indicator */}
         <div className="flex-1 min-h-0 overflow-y-auto flex items-start justify-center md:justify-center">
           {lastEnemyMove && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col justify-center items-center py-2 space-y-1"
@@ -668,13 +668,12 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`text-center text-xs px-3 py-1 rounded border ${
-                    log.type === 'damage' ? 'text-rose-300 bg-rose-900/40 border-rose-500/30' :
-                    log.type === 'status' ? 'text-amber-300 bg-amber-900/40 border-amber-500/30' :
-                    log.type === 'victory' ? 'text-emerald-300 bg-emerald-900/40 border-emerald-500/30' :
-                    log.type === 'defeat' ? 'text-red-300 bg-red-900/40 border-red-500/30' :
-                    'text-slate-300 bg-slate-800/40 border-slate-500/30'
-                  }`}
+                  className={`text-center text-xs px-3 py-1 rounded border ${log.type === 'damage' ? 'text-rose-300 bg-rose-900/40 border-rose-500/30' :
+                      log.type === 'status' ? 'text-amber-300 bg-amber-900/40 border-amber-500/30' :
+                        log.type === 'victory' ? 'text-emerald-300 bg-emerald-900/40 border-emerald-500/30' :
+                          log.type === 'defeat' ? 'text-red-300 bg-red-900/40 border-red-500/30' :
+                            'text-slate-300 bg-slate-800/40 border-slate-500/30'
+                    }`}
                 >
                   {log.message}
                 </motion.div>
@@ -696,9 +695,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 >
                   {activeEffect.text && (
                     <div className={`text-2xl font-black italic uppercase tracking-tighter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]
-                      ${activeEffect.type === 'supereffective' ? 'text-amber-400' : 
-                        activeEffect.type === 'ineffective' ? 'text-slate-400' : 
-                        activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
+                      ${activeEffect.type === 'supereffective' ? 'text-amber-400' :
+                        activeEffect.type === 'ineffective' ? 'text-slate-400' :
+                          activeEffect.type === 'crit' ? 'text-rose-500' : 'text-white'}`}
                     >
                       {activeEffect.text}
                     </div>
@@ -715,14 +714,14 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             animate={isPlayerTurn ? { x: [-5, 5, -5] } : (activeEffect?.side === 'player' ? { x: [0, -10, 10, -10, 0], filter: ['brightness(1)', 'brightness(2)', 'brightness(1)'] } : {})}
             transition={activeEffect?.side === 'player' ? { duration: 0.2 } : { repeat: Infinity, duration: 0.5 }}
           >
-            <PokemonSprite 
-              id={player.id} 
-              name={player.name} 
+            <PokemonSprite
+              id={player.id}
+              name={player.name}
               isBack={true}
               className="w-36 h-36 md:w-64 md:h-64 mr-1 md:mr-4"
             />
           </motion.div>
-          <motion.div 
+          <motion.div
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className="bg-slate-800/80 p-2 md:p-4 rounded-2xl border border-white/10 w-52 md:w-64 shadow-xl text-xs md:text-base"
@@ -732,10 +731,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 <span className="font-bold text-base md:text-lg truncate">{player.name}</span>
                 {player.status && (
                   <span className={`text-[8px] md:text-[10px] px-1 py-0.5 rounded font-bold text-white whitespace-nowrap
-                    ${player.status === 'PAR' ? 'bg-amber-400' : 
+                    ${player.status === 'PAR' ? 'bg-amber-400' :
                       player.status === 'BRN' ? 'bg-rose-500' :
-                      player.status === 'PSN' ? 'bg-purple-500' :
-                      player.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
+                        player.status === 'PSN' ? 'bg-purple-500' :
+                          player.status === 'SLP' ? 'bg-slate-400' : 'bg-cyan-400'}`}
                   >
                     {player.status}
                   </span>
@@ -744,7 +743,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               <span className="text-[10px] md:text-xs opacity-60">Lv. {player.level}</span>
             </div>
             <div className="h-2 md:h-3 bg-slate-700 rounded-full overflow-hidden border border-black/20">
-              <motion.div 
+              <motion.div
                 className={`h-full transition-colors duration-500 ${getHealthColor(player.currentHp, player.maxHp)}`}
                 initial={{ width: '100%' }}
                 animate={{ width: `${(player.currentHp / player.maxHp) * 100}%` }}
@@ -759,16 +758,15 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               </div>
             )}
             <StatStagesBadges pokemon={player} />
-            
+
             {/* Party Status */}
             <div className="mt-1.5 md:mt-3 pt-1 md:pt-2 border-t border-white/5 flex gap-1">
               {party.map((member, i) => (
-                <div 
+                <div
                   key={member.id + i}
-                  className={`w-1.5 md:w-2 h-1.5 md:h-2 rounded-full ${
-                    i === 0 ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 
-                    member.currentHp > 0 ? 'bg-emerald-500/50' : 'bg-rose-500/30'
-                  }`}
+                  className={`w-1.5 md:w-2 h-1.5 md:h-2 rounded-full ${i === 0 ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' :
+                      member.currentHp > 0 ? 'bg-emerald-500/50' : 'bg-rose-500/30'
+                    }`}
                   title={member.name}
                 />
               ))}
@@ -785,7 +783,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         {/* Moves Grid */}
         <div className="flex-1 grid grid-cols-2 gap-2 relative z-40">
           {hoveredMove && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
@@ -823,7 +821,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu || (move.currentPp !== undefined && move.currentPp <= 0)}
               className={`p-3 rounded-xl border transition-all flex flex-col items-start gap-1 group text-[11px]
                 ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu && (move.currentPp === undefined || move.currentPp > 0)
-                  ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-105' 
+                  ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-105'
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
             >
               <span className="font-bold uppercase tracking-wider text-xs md:text-sm">{move.name}</span>
@@ -833,7 +831,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               </div>
             </button>
           ))}
-          
+
           {/* Switch Button */}
           <button
             onClick={() => setShowSwitchMenu(true)}
@@ -863,7 +861,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         {/* Bag Menu Overlay */}
         <AnimatePresence>
           {showBagMenu && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -917,7 +915,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                         </button>
                       ))}
                     </div>
-                    <button 
+                    <button
                       onClick={() => setSelectedItemForPokemon(null)}
                       className="w-full mt-4 p-2 text-slate-400 hover:text-white text-xs font-bold uppercase"
                     >
@@ -925,7 +923,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                     </button>
                   </>
                 )}
-                <button 
+                <button
                   onClick={() => { setShowBagMenu(false); setSelectedItemForPokemon(null); }}
                   className="w-full mt-6 p-3 text-slate-500 hover:text-white font-bold uppercase text-xs tracking-widest"
                 >
@@ -939,7 +937,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         {/* Switch Menu Overlay */}
         <AnimatePresence>
           {showSwitchMenu && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -954,9 +952,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                       disabled={i === 0 || member.currentHp <= 0}
                       onClick={() => handleSwitch(i, player.currentHp === 0)}
                       className={`p-4 rounded-2xl border flex items-center justify-between transition-all
-                        ${i === 0 ? 'border-indigo-500/50 bg-indigo-500/10 opacity-50 cursor-not-allowed' : 
-                          member.currentHp > 0 ? 'border-white/10 bg-slate-800 hover:bg-slate-700 hover:border-white/30' : 
-                          'border-rose-500/20 bg-rose-500/5 opacity-40 cursor-not-allowed'}`}
+                        ${i === 0 ? 'border-indigo-500/50 bg-indigo-500/10 opacity-50 cursor-not-allowed' :
+                          member.currentHp > 0 ? 'border-white/10 bg-slate-800 hover:bg-slate-700 hover:border-white/30' :
+                            'border-rose-500/20 bg-rose-500/5 opacity-40 cursor-not-allowed'}`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="font-bold">{member.name}</div>
@@ -968,7 +966,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                     </button>
                   ))}
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     if (player.currentHp > 0) {
                       setShowSwitchMenu(false);
@@ -993,11 +991,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                   key={log.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`text-sm font-medium ${
-                    log.type === 'damage' ? 'text-rose-400' : 
-                    log.type === 'victory' ? 'text-emerald-400 font-bold' :
-                    log.type === 'defeat' ? 'text-rose-600 font-bold' : 'text-slate-300'
-                  }`}
+                  className={`text-sm font-medium ${log.type === 'damage' ? 'text-rose-400' :
+                      log.type === 'victory' ? 'text-emerald-400 font-bold' :
+                        log.type === 'defeat' ? 'text-rose-600 font-bold' : 'text-slate-300'
+                    }`}
                 >
                   {log.message}
                 </motion.div>

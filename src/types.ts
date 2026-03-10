@@ -33,6 +33,7 @@ export interface Move {
   ailmentChance?: number;
   statChanges?: { stat: keyof Stats; change: number }[];
   target?: string;
+  priority?: number;
 }
 
 export interface Stats {

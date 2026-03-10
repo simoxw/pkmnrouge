@@ -3,10 +3,10 @@ import { TYPE_CHART } from '../constants';
 
 // Tabella moltiplicatori stage (Gen 4/5 standard)
 const STAGE_MULTIPLIERS: Record<number, number> = {
-  [-6]: 0.25, [-5]: 2/7, [-4]: 1/3, [-3]: 0.4,
-  [-2]: 0.5,  [-1]: 2/3, [0]: 1,
-  [1]: 1.5,   [2]: 2,    [3]: 2.5,
-  [4]: 3,     [5]: 3.5,  [6]: 4
+  [-6]: 0.25, [-5]: 2 / 7, [-4]: 1 / 3, [-3]: 0.4,
+  [-2]: 0.5, [-1]: 2 / 3, [0]: 1,
+  [1]: 1.5, [2]: 2, [3]: 2.5,
+  [4]: 3, [5]: 3.5, [6]: 4
 };
 
 /**
@@ -43,7 +43,7 @@ export function getActualStats(baseStats: Stats, level: number = 50): Stats {
 export function updateStats(pokemon: BattlePokemon, newLevel: number): BattlePokemon {
   const newActualStats = getActualStats(pokemon.baseStats, newLevel);
   const hpDiff = newActualStats.hp - pokemon.actualStats.hp;
-  
+
   return {
     ...pokemon,
     level: newLevel,
@@ -61,11 +61,11 @@ export function getTypeEffectiveness(attackType: Type, targetType: Type): number
  * Formula del danno ufficiale:
  * Damage = (((2 * Level / 5 + 2) * Power * A/D) / 50 + 2) * Modifier
  */
-export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon, move: Move): { 
-  damage: number, 
-  effectiveness: number, 
-  isCritical: boolean, 
-  isMiss: boolean 
+export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon, move: Move): {
+  damage: number,
+  effectiveness: number,
+  isCritical: boolean,
+  isMiss: boolean
 } {
   // Accuracy check
   const randomAccuracy = Math.random() * 100;
@@ -79,7 +79,7 @@ export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon
   }
 
   const level = attacker.level || 50;
-  
+
   // Damage Class handling con applicazione dei stage multipliers
   const atkStage = move.damageClass === 'physical'
     ? (attacker.statStages?.attack ?? 0)
@@ -103,10 +103,10 @@ export function calculateDamage(attacker: BattlePokemon, defender: BattlePokemon
   }
 
   const baseDamage = (((2 * level / 5 + 2) * move.power * (A / D)) / 50 + 2);
-  
+
   // Moltiplicatore casuale tra 0.85 e 1.0
   const random = 0.85 + Math.random() * 0.15;
-  
+
   // STAB (Same Type Attack Bonus)
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
 
