@@ -79,7 +79,7 @@ export interface BattleLog {
   type: 'info' | 'damage' | 'status' | 'victory' | 'defeat';
 }
 
-export type GameState = 'DRAFT' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER';
+export type GameState = 'MAIN_MENU' | 'DRAFT' | 'HUB' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER' | 'PROFILE' | 'OPTIONS';
 
 export interface Item {
   id: string;
@@ -101,5 +101,16 @@ export interface SaveData {
   money: number;
   inventory: InventoryItem[];
   timestamp: number;
+}
+
+export interface GameStats {
+  maxRoomReached: number;
+  mostUsedPokemonId: string;
+  maxLevelAchieved: number;
+}
+
+export interface Settings {
+  soundEnabled: boolean;
+  musicEnabled: boolean;
 }
 

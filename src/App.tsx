@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Pokemon, BattlePokemon, GameState, SaveData } from './types';
+import { Pokemon, BattlePokemon, GameState, SaveData, GameStats, Settings } from './types';
+import MainMenu from './components/MainMenu';
 import DraftScreen from './components/DraftScreen';
+import TeamHub from './components/TeamHub';
 import RoomNavigation from './components/RoomNavigation';
 import BattleEngine from './components/BattleEngine';
 import ShopScreen from './components/ShopScreen';
@@ -16,15 +18,25 @@ import { useSoundEffects } from './hooks/useSoundEffects';
 
 
 export default function App() {
-  const [gameState, setGameState] = useState<GameState>('DRAFT');
+  const [gameState, setGameState] = useState<GameState>('MAIN_MENU');
   const [party, setParty] = useState<BattlePokemon[]>([]);
   const [enemyTeam, setEnemyTeam] = useState<BattlePokemon[]>([]);
   const [roomNumber, setRoomNumber] = useState(1);
-  const [money, setMoney] = useState(100); // Start with 100 money
+  const [money, setMoney] = useState(100);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
   const [pendingMove, setPendingMove] = useState<{ pokemonIndex: number, newMove: any } | null>(null);
+  const [settings, setSettings] = useState<Settings>(() => {
+    const saved = localStorage.getItem('pkmrouge_settings');
+    return saved ? JSON.parse(saved) : { soundEnabled: true, musicEnabled: true };
+  });
+  const [gameStats, setGameStats] = useState<GameStats>(() => {
+    const saved = localStorage.getItem('pkmrouge_stats');
+    return saved
+      ? JSON.parse(saved)
+      : { maxRoomReached: 0, mostUsedPokemonId: '', maxLevelAchieved: 0 };
+  });
 
   // handle persistent storage and provide helpers
   const { hasSave, loadGame } = useGameSave({ party, roomNumber, money, inventory, gameState });
@@ -34,14 +46,55 @@ export default function App() {
 
   const handleLoadGame = () => {
     playSound('click');
+    console.log('🔄 handleLoadGame clicked');
     const data = loadGame();
+    console.log('📦 Data caricato:', data);
     if (data) {
+      console.log('✅ Caricamento partita...');
       setParty(data.party);
       setRoomNumber(data.roomNumber);
       setMoney(data.money || 0);
       setInventory(data.inventory || []);
-      setGameState(data.gameState === 'BATTLE' ? 'NAVIGATION' : data.gameState);
+      // Converte qualsiasi stato a HUB quando si carica una partita salvata
+      // (NAVIGATION, BATTLE, MAIN_MENU, ecc. -> HUB)
+      let nextState: GameState = 'HUB';
+      console.log('🎮 Nuovo state:', nextState);
+      setGameState(nextState);
+    } else {
+      console.error('❌ ERRORE: Nessun salvataggio trovato nel localStorage');
+      alert('Errore: Nessun salvataggio trovato. Verifica il localStorage.');
     }
+  };
+
+  // Apply 30% healing to all pokemon after battle
+  const applyRest = (partyToRest: BattlePokemon[]): BattlePokemon[] => {
+    return partyToRest.map(pkmn => ({
+      ...pkmn,
+      currentHp: Math.min(pkmn.maxHp, Math.ceil(pkmn.currentHp + pkmn.maxHp * 0.3))
+    }));
+  };
+
+  // Update game stats after reaching a new room or level
+  const updateGameStats = (newRoom: number, newMaxLevel: number) => {
+    setGameStats(prev => {
+      const updated = {
+        ...prev,
+        maxRoomReached: Math.max(prev.maxRoomReached, newRoom),
+        maxLevelAchieved: Math.max(prev.maxLevelAchieved, newMaxLevel),
+        mostUsedPokemonId: party[0]?.name || prev.mostUsedPokemonId
+      };
+      localStorage.setItem('pkmrouge_stats', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Swap two pokemon in the party
+  const handleSwapPartyOrder = (index1: number, index2: number) => {
+    const newParty = [...party];
+    const temp = newParty[index1];
+    newParty[index1] = newParty[index2];
+    newParty[index2] = temp;
+    setParty(newParty);
   };
 
   const handlePokemonSelect = (pokemon: Pokemon) => {
@@ -66,11 +119,11 @@ export default function App() {
 
     if (gameState === 'DRAFT') {
       setParty([newPokemon]);
-      setGameState('NAVIGATION');
+      setGameState('HUB');
     } else if (gameState === 'RECRUITMENT') {
       if (party.length < 6) {
         setParty(prev => [...prev, newPokemon]);
-        setGameState('NAVIGATION');
+        setGameState('HUB');
       } else {
         // Party is full, need to choose who to replace
         setPendingRecruit(newPokemon);
@@ -84,7 +137,7 @@ export default function App() {
       newParty[index] = pendingRecruit;
       setParty(newParty);
       setPendingRecruit(null);
-      setGameState('NAVIGATION');
+      setGameState('HUB');
     }
   };
 
@@ -190,12 +243,13 @@ export default function App() {
       activePkmn = updateStats(activePkmn, newLevel);
       updatedParty[0] = activePkmn; // Assign the updated Pokémon back
       
-      // Heal ALL Pokémon to full HP when advancing to next room
-      updatedParty.forEach((pkmn, i) => {
-        updatedParty[i] = { ...pkmn, currentHp: pkmn.maxHp };
-      });
-      
-      setParty(updatedParty);
+      // Apply Rest (30% healing to all)
+      const restedParty = applyRest(updatedParty);
+      setParty(restedParty);
+
+      // Update game stats
+      const nextRoom = roomNumber + 1;
+      updateGameStats(nextRoom, newLevel);
 
       // Move Learning every 5 levels
       if (newLevel % 5 === 0) {
@@ -216,7 +270,6 @@ export default function App() {
         }
       }
 
-      const nextRoom = roomNumber + 1;
       if (nextRoom > 100) {
         setGameState('GAME_OVER'); // We'll use GAME_OVER state but with a victory message
         return;
@@ -228,7 +281,7 @@ export default function App() {
       if (isBossFloor && (roomNumber <= 50 || roomNumber >= 60)) {
         setGameState('RECRUITMENT');
       } else {
-        setGameState('NAVIGATION');
+        setGameState('HUB');
       }
     } else {
       setGameState('GAME_OVER');
@@ -250,30 +303,28 @@ export default function App() {
 
     setPendingMove(null);
     
-    // Continue to next state
-    const nextRoom = roomNumber + 1;
-    if (nextRoom > 100) {
-      setGameState('GAME_OVER');
-      return;
-    }
-    setRoomNumber(nextRoom);
-    
-    const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
-    if (isBossFloor && (roomNumber <= 50 || roomNumber >= 60)) {
-      setGameState('RECRUITMENT');
-    } else {
-      setGameState('NAVIGATION');
-    }
+    // Continue to next state (go to HUB)
+    setGameState('HUB');
   };
 
   const restartGame = () => {
-    setGameState('DRAFT');
+    setGameState('MAIN_MENU');
     setRoomNumber(1);
     setMoney(100);
     setInventory([]);
     setParty([]);
     setEnemyTeam([]);
     setPendingRecruit(null);
+  };
+
+  const handleStartGame = () => {
+    playSound('click');
+    setGameState('DRAFT');
+    setRoomNumber(1);
+    setMoney(100);
+    setInventory([]);
+    setParty([]);
+    setEnemyTeam([]);
   };
 
   const handleBuyItem = (item: Item) => {
@@ -323,21 +374,32 @@ export default function App() {
         </div>
       )}
 
+      {gameState === 'MAIN_MENU' && (
+        <MainMenu 
+          onStart={handleStartGame}
+          onLoadGame={handleLoadGame}
+          hasSave={hasSave}
+        />
+      )}
+
       {gameState === 'DRAFT' && (
         <div className="relative h-full">
-          {hasSave && (
-            <div className="absolute top-6 right-6 z-50">
-              <button
-                onClick={handleLoadGame}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
-              >
-                <Download size={18} />
-                Carica Partita
-              </button>
-            </div>
-          )}
           <DraftScreen onSelect={handlePokemonSelect} />
         </div>
+      )}
+
+      {gameState === 'HUB' && (
+        <TeamHub
+          party={party}
+          inventory={inventory}
+          roomNumber={roomNumber}
+          money={money}
+          onStartBattle={startBattle}
+          onSwapPartyOrder={handleSwapPartyOrder}
+          onUseItem={handleUseItem}
+          onOpenShop={() => setGameState('SHOP')}
+          onOpenMenu={() => setGameState('MAIN_MENU')}
+        />
       )}
 
       {gameState === 'NAVIGATION' && (
@@ -365,7 +427,7 @@ export default function App() {
         <ShopScreen 
           money={money} 
           onBuy={handleBuyItem} 
-          onExit={() => setGameState('NAVIGATION')} 
+          onExit={() => setGameState('HUB')} 
         />
       )}
 
@@ -395,7 +457,7 @@ export default function App() {
             ))}
           </div>
           <button 
-            onClick={() => { setPendingRecruit(null); setGameState('NAVIGATION'); }}
+            onClick={() => { setPendingRecruit(null); setGameState('HUB'); }}
             className="mt-8 text-slate-500 hover:text-white text-sm font-bold uppercase tracking-widest"
           >
             Annulla Reclutamento
