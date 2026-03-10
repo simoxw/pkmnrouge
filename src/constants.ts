@@ -241,13 +241,13 @@ export const TYPE_CHART: Record<Type, Partial<Record<Type, number>>> = {
 
 export const BOSS_ENCOUNTERS: Record<number, number[]> = {
   10: [143], // Snorlax
-  20: [130], // Gyarados
-  30: [248], // Tyranitar
-  40: [445], // Garchomp
-  50: [150], // Mewtwo
-  60: [249, 250], // Lugia, Ho-Oh
-  70: [382, 383, 384], // Kyogre, Groudon, Rayquaza
-  80: [483, 484], // Dialga, Palkia
-  90: [487], // Giratina
-  100: [493] // Arceus
+  20: [149, 248], // Dragonite, Tyranitar
+  30: [243, 244, 245], // Raikou, Entei, Suicune
+  40: [151, 251, 385, 490], // Mew, Celebi, Jirachi, Manaphy
+  50: [488, 483, 484, 491, 487], // Cresselia, Dialga, Palkia, Darkrai, Giratina
+  60: [249, 250, 384, 386, 382, 383], // Lugia, Ho-Oh, Rayquaza, Deoxys, Kyogre, Groudon
+  70: [485, 486, 492, 380, 381, 150], // Heatran, Regigigas, Shaymin, Latias, Latios, Mewtwo
+  80: [145, 144, 146, 378, 377, 379], // Zapdos, Articuno, Moltres, Regice, Regirock, Registeel
+  90: [487, 151, 382, 384, 386, 249], // Giratina, Mew, Kyogre, Rayquaza, Deoxys, Lugia
+  100: [150, 493, 242, 386, 151, 486] // Mewtwo, Arceus, Blissey, Deoxys, Mew, Regigigas
 };
