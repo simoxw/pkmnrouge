@@ -6,6 +6,7 @@ export const ITEMS: Item[] = [
     name: 'Pozione',
     description: 'Cura 50 HP a un Pokémon.',
     price: 50,
+    minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
       const healAmount = 50;
       const newHp = Math.min(pkmn.maxHp, pkmn.currentHp + healAmount);
@@ -20,6 +21,7 @@ export const ITEMS: Item[] = [
     name: 'Antidoto',
     description: 'Cura lo stato di Avvelenamento.',
     price: 30,
+    minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
       if (pkmn.status === 'PSN') {
         return {
@@ -35,6 +37,7 @@ export const ITEMS: Item[] = [
     name: 'Antiparalisi',
     description: 'Cura lo stato di Paralisi.',
     price: 30,
+    minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
       if (pkmn.status === 'PAR') {
         return {
@@ -50,6 +53,7 @@ export const ITEMS: Item[] = [
     name: 'Sveglia',
     description: 'Sveglia un Pokémon addormentato.',
     price: 40,
+    minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
       if (pkmn.status === 'SLP') {
         return {
@@ -65,6 +69,7 @@ export const ITEMS: Item[] = [
     name: 'Antiscottatura',
     description: 'Cura lo stato di Scottatura.',
     price: 40,
+    minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
       if (pkmn.status === 'BRN') {
         return {
@@ -80,6 +85,7 @@ export const ITEMS: Item[] = [
     name: 'Antigelo',
     description: 'Scongela un Pokémon.',
     price: 40,
+    minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
       if (pkmn.status === 'FRZ') {
         return {
@@ -95,6 +101,7 @@ export const ITEMS: Item[] = [
     name: 'Etere',
     description: 'Ripristina 10 PP alla mossa con meno PP rimasti.',
     price: 80,
+    minRoom: 20,
     effect: (pkmn: BattlePokemon) => {
       // Trova la mossa con currentPp più basso (esclude mosse già al massimo)
       const moveIndex = pkmn.moves.reduce((lowestIdx, move, idx, arr) => {
@@ -127,6 +134,7 @@ export const ITEMS: Item[] = [
     name: 'Superetere',
     description: 'Ripristina tutti i PP alla mossa con meno PP rimasti.',
     price: 150,
+    minRoom: 20,
     effect: (pkmn: BattlePokemon) => {
       const moveIndex = pkmn.moves.reduce((lowestIdx, move, idx, arr) => {
         const currPp = move.currentPp ?? move.pp;
@@ -156,6 +164,7 @@ export const ITEMS: Item[] = [
     name: 'Elisir',
     description: 'Ripristina 10 PP a tutte le mosse.',
     price: 250,
+    minRoom: 40,
     effect: (pkmn: BattlePokemon) => {
       const allFull = pkmn.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
       if (allFull) {
@@ -178,6 +187,7 @@ export const ITEMS: Item[] = [
     name: 'Superelisir',
     description: 'Ripristina tutti i PP di tutte le mosse.',
     price: 500,
+    minRoom: 50,
     effect: (pkmn: BattlePokemon) => {
       const allFull = pkmn.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
       if (allFull) {
@@ -191,6 +201,67 @@ export const ITEMS: Item[] = [
         message: `Tutti i PP di ${pkmn.name} ripristinati!`
       };
     }
+  },
+  {
+    id: 'full_heal',
+    name: 'Guarisci Tutto',
+    description: 'Cura qualsiasi stato alterato.',
+    price: 100,
+    minRoom: 10,
+    effect: (pkmn: BattlePokemon) => {
+      if (!pkmn.status) return { updatedPokemon: pkmn, message: 'Non ha avuto effetto...' };
+      return {
+        updatedPokemon: { ...pkmn, status: null, sleepTurns: undefined },
+        message: `${pkmn.name} è guarito!`
+      };
+    }
+  },
+  {
+    id: 'super_potion',
+    name: 'Superpozione',
+    description: 'Cura 120 HP a un Pokémon.',
+    price: 120,
+    minRoom: 10,
+    effect: (pkmn: BattlePokemon) => ({
+      updatedPokemon: { ...pkmn, currentHp: Math.min(pkmn.maxHp, pkmn.currentHp + 120) },
+      message: `${pkmn.name} ha recuperato HP!`
+    })
+  },
+  {
+    id: 'hyper_potion',
+    name: 'Iperpozione',
+    description: 'Cura 200 HP a un Pokémon.',
+    price: 250,
+    minRoom: 40,
+    effect: (pkmn: BattlePokemon) => ({
+      updatedPokemon: { ...pkmn, currentHp: Math.min(pkmn.maxHp, pkmn.currentHp + 200) },
+      message: `${pkmn.name} ha recuperato HP!`
+    })
+  },
+  {
+    id: 'revive',
+    name: 'Revitalizzante',
+    description: 'Riporta in vita un Pokémon con il 50% degli HP.',
+    price: 350,
+    minRoom: 50,
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.currentHp > 0) return { updatedPokemon: pkmn, message: `${pkmn.name} è già in piedi!` };
+      return {
+        updatedPokemon: { ...pkmn, currentHp: Math.floor(pkmn.maxHp / 2), status: null },
+        message: `${pkmn.name} è tornato in battaglia!`
+      };
+    }
+  },
+  {
+    id: 'full_restore',
+    name: 'Ripristino Totale',
+    description: 'Ripristina tutti gli HP e cura qualsiasi stato.',
+    price: 1000,
+    minRoom: 60,
+    effect: (pkmn: BattlePokemon) => ({
+      updatedPokemon: { ...pkmn, currentHp: pkmn.maxHp, status: null, sleepTurns: undefined },
+      message: `${pkmn.name} è completamente ripristinato!`
+    })
   }
 ];
 

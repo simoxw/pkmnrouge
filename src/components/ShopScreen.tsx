@@ -6,19 +6,37 @@ import { ShoppingBag, Coins, ArrowLeft, Check } from 'lucide-react';
 
 interface ShopScreenProps {
   money: number;
+  roomNumber: number;
   onBuy: (item: Item) => void;
   onExit: () => void;
 }
 
-export default function ShopScreen({ money, onBuy, onExit }: ShopScreenProps) {
+export default function ShopScreen({ money, roomNumber, onBuy, onExit }: ShopScreenProps) {
   const [shopItems, setShopItems] = useState<Item[]>([]);
   const [purchaseFeedback, setPurchaseFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    // Select 4 random items for the shop
-    const shuffled = [...ITEMS].sort(() => 0.5 - Math.random());
-    setShopItems(shuffled.slice(0, 4));
-  }, []);
+    const available = ITEMS.filter(i => (i.minRoom ?? 1) <= roomNumber);
+
+    const cura  = available.filter(i => ['potion','super_potion','hyper_potion','full_restore','revive'].includes(i.id));
+    const stato = available.filter(i => ['antidote','paralyze_heal','awakening','burn_heal','ice_heal','full_heal'].includes(i.id));
+    const pp    = available.filter(i => ['ether','max_ether','elixir','max_elixir'].includes(i.id));
+
+    const pick = (arr: typeof available, n: number) =>
+      [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
+
+    let pool = [...pick(cura, 2), ...pick(stato, 2), ...pick(pp, 1)];
+
+    // Se il pool ha meno di 4 item, aggiungi oggetti rimanenti
+    if (pool.length < 4) {
+      const usedIds = new Set(pool.map(i => i.id));
+      const remaining = available.filter(i => !usedIds.has(i.id));
+      const extra = pick(remaining, 4 - pool.length);
+      pool = [...pool, ...extra];
+    }
+
+    setShopItems(pool.sort(() => 0.5 - Math.random()));
+  }, [roomNumber]);
 
   const handleBuy = (item: Item) => {
     if (money >= item.price) {

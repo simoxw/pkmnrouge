@@ -89,6 +89,7 @@ export interface Item {
   name: string;
   description: string;
   price: number;
+  minRoom?: number;
   effect: (pokemon: BattlePokemon) => { updatedPokemon: BattlePokemon, message: string };
 }
 

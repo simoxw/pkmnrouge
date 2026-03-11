@@ -441,7 +441,8 @@ export default function App() {
 
       {gameState === 'SHOP' && (
         <ShopScreen 
-          money={money} 
+          money={money}
+          roomNumber={roomNumber}
           onBuy={handleBuyItem} 
           onExit={() => setGameState('HUB')} 
         />

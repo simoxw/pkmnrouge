@@ -47,7 +47,7 @@ const EXCLUDED_MOVE_IDS = new Set([
   'conversion','conversion2','camouflage',
   'lock-on','mind-reader','focus-energy',
   'haze','belch','after-you','quash',
-  'bide','frustration',
+  'bide','frustration', 'psywave',
   // avoid Mud Sport as well
   'mud-sport',
 ]);
