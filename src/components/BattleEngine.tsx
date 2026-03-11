@@ -396,21 +396,18 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       setEnemyEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
-      setTimeout(() => triggerEffect('supereffective', 'player', 'SUPEREFFICACE!'), 500);
     }
     if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
       const msg = 'Non è molto efficace...';
       setEnemyEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
-      setTimeout(() => triggerEffect('ineffective', 'player', 'NON EFFICACE'), 500);
     }
     if (effectResult.effectiveness === 0) {
       const msg = 'Non ha effetto...';
       setEnemyEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
-      setTimeout(() => triggerEffect('no-effect', 'player', 'NESSUN EFFETTO'), 500);
     }
 
     if (effectResult.damage && effectResult.damage > 0) addLog(`Danno ricevuto: ${effectResult.damage}`, 'damage');
