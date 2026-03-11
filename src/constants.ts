@@ -8,6 +8,7 @@ export const ITEMS: Item[] = [
     price: 50,
     minRoom: 1,
     effect: (pkmn: BattlePokemon) => {
+      if (pkmn.currentHp <= 0) return { updatedPokemon: pkmn, message: 'Non ha effetto su un Pokémon esausto!' };
       const healAmount = 50;
       const newHp = Math.min(pkmn.maxHp, pkmn.currentHp + healAmount);
       return {
@@ -222,10 +223,13 @@ export const ITEMS: Item[] = [
     description: 'Cura 120 HP a un Pokémon.',
     price: 120,
     minRoom: 10,
-    effect: (pkmn: BattlePokemon) => ({
-      updatedPokemon: { ...pkmn, currentHp: Math.min(pkmn.maxHp, pkmn.currentHp + 120) },
-      message: `${pkmn.name} ha recuperato HP!`
-    })
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.currentHp <= 0) return { updatedPokemon: pkmn, message: 'Non ha effetto su un Pokémon esausto!' };
+      return {
+        updatedPokemon: { ...pkmn, currentHp: Math.min(pkmn.maxHp, pkmn.currentHp + 120) },
+        message: `${pkmn.name} ha recuperato HP!`
+      };
+    }
   },
   {
     id: 'hyper_potion',
@@ -233,10 +237,13 @@ export const ITEMS: Item[] = [
     description: 'Cura 200 HP a un Pokémon.',
     price: 250,
     minRoom: 40,
-    effect: (pkmn: BattlePokemon) => ({
-      updatedPokemon: { ...pkmn, currentHp: Math.min(pkmn.maxHp, pkmn.currentHp + 200) },
-      message: `${pkmn.name} ha recuperato HP!`
-    })
+    effect: (pkmn: BattlePokemon) => {
+      if (pkmn.currentHp <= 0) return { updatedPokemon: pkmn, message: 'Non ha effetto su un Pokémon esausto!' };
+      return {
+        updatedPokemon: { ...pkmn, currentHp: Math.min(pkmn.maxHp, pkmn.currentHp + 200) },
+        message: `${pkmn.name} ha recuperato HP!`
+      };
+    }
   },
   {
     id: 'revive',
