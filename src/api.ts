@@ -114,12 +114,25 @@ export async function fetchPokemonData(id: number): Promise<Pokemon> {
       })
   );
 
+  const validMoves = moves.filter(Boolean);
+  // Se nessuna mossa valida, prendi le prime 4 senza filtro EXCLUDED
+  let finalMoves = validMoves;
+  if (validMoves.length === 0) {
+    finalMoves = await Promise.all(
+      data.moves.slice(0, 4).map(async (m: any) => {
+        const moveRes = await fetch(m.move.url);
+        const moveData = await moveRes.json();
+        return formatMove(moveData);
+      })
+    );
+  }
+
   return {
     id: data.id.toString(),
     name: data.name.charAt(0).toUpperCase() + data.name.slice(1),
     types,
     baseStats,
-    moves,
+    moves: finalMoves,
     ability: data.abilities[0].ability.name,
     spriteUrl: data.sprites.front_default,
     cryUrl: data.cries?.latest || data.cries?.legacy,

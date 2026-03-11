@@ -27,6 +27,7 @@ export interface MoveEffectResult {
 
 export class MoveEffectHandler {
   static categorizeMove(move: Move): MoveCategory {
+    if (!move) return MoveCategory.DAMAGE;
     if (move.damageClass === 'status') {
       if (this.isHealingMove(move)) return MoveCategory.HEALING;
       if (move.statChanges && move.statChanges.length > 0) {
