@@ -99,15 +99,24 @@ export default function App() {
     setParty(newParty);
   };
 
+  const getRecruitLevel = (): number => {
+    const levels: Record<number, number> = {
+      10: 50, 20: 55, 30: 60, 40: 65,
+      50: 70, 60: 75, 70: 80, 80: 85,
+    };
+    return levels[roomNumber] ?? 50;
+  };
+
   const handlePokemonSelect = (pokemon: Pokemon) => {
     playSound('click');
-    const actualStats = getActualStats(pokemon.baseStats);
+    const recruitLevel = gameState === 'RECRUITMENT' ? getRecruitLevel() : 50;
+    const actualStats = getActualStats(pokemon.baseStats, recruitLevel);
     const newPokemon: BattlePokemon = {
       ...pokemon,
       actualStats,
       currentHp: actualStats.hp,
       maxHp: actualStats.hp,
-      level: 50,
+      level: recruitLevel,
       status: null,
       statStages: {
         hp: 0,
