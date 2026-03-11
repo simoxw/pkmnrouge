@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GameStats, Settings } from '../types';
 import { motion } from 'motion/react';
-import { User, Volume2, VolumeX, Music, SkipForward } from 'lucide-react';
+import { User, Volume2, VolumeX, Music, SkipForward, Shield } from 'lucide-react';
 
 interface MainMenuProps {
   onStart: () => void;
@@ -84,9 +84,42 @@ export default function MainMenu({ onStart, onLoadGame, hasSave }: MainMenuProps
                   <div className="text-xs text-purple-400 uppercase font-bold mb-1">Livello Massimo</div>
                   <div className="text-2xl font-black text-white">{gameStats.maxLevelAchieved || 0}</div>
                 </div>
-                <div className="bg-slate-900 p-4 rounded-xl border border-emerald-500/30">
-                  <div className="text-xs text-emerald-400 uppercase font-bold mb-1">Pokémon Più Usato</div>
-                  <div className="text-lg font-bold text-white">{gameStats.mostUsedPokemonId || 'Nessuno'}</div>
+                <div className="bg-slate-900 p-4 rounded-xl border border-amber-500/30">
+                  <div className="text-xs text-amber-400 uppercase font-bold mb-3">Medaglie</div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { room: 10, color: '#ef4444' },
+                      { room: 20, color: '#f97316' },
+                      { room: 30, color: '#eab308' },
+                      { room: 40, color: '#22c55e' },
+                      { room: 50, color: '#06b6d4' },
+                      { room: 60, color: '#3b82f6' },
+                      { room: 70, color: '#8b5cf6' },
+                      { room: 80, color: '#ec4899' },
+                    ].map(({ room, color }, i) => {
+                      const earned = gameStats.maxRoomReached >= room;
+                      return (
+                        <div key={room} title={`Medaglia ${i+1} — Boss stanza ${room}`}
+                          className="flex flex-col items-center gap-0.5">
+                          <Shield
+                            size={28}
+                            color={earned ? color : '#334155'}
+                            fill={earned ? color + '33' : 'transparent'}
+                            strokeWidth={2}
+                          />
+                          <span className="text-[8px] font-bold" style={{ color: earned ? color : '#475569' }}>
+                            {i + 1}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {gameStats.maxRoomReached >= 90 && (
+                    <div className="mt-3 text-xs font-bold text-yellow-300 flex items-center gap-1">🏆 Campione della Lega</div>
+                  )}
+                  {gameStats.maxRoomReached >= 100 && (
+                    <div className="mt-1 text-xs font-bold text-yellow-400 flex items-center gap-1">⭐ Pokémon Master</div>
+                  )}
                 </div>
               </div>
               <button
