@@ -98,6 +98,29 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     }
   }, [isPlayerTurn, isBattleOver]);
 
+  const isItemUsable = (itemId: string, member: BattlePokemon): boolean => {
+    const allPpFull = member.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
+    switch (itemId) {
+      case 'potion':
+      case 'super_potion':
+      case 'hyper_potion':
+        return member.currentHp > 0 && member.currentHp < member.maxHp;
+      case 'antidote':      return member.status === 'PSN';
+      case 'paralyze_heal': return member.status === 'PAR';
+      case 'awakening':     return member.status === 'SLP';
+      case 'burn_heal':     return member.status === 'BRN';
+      case 'ice_heal':      return member.status === 'FRZ';
+      case 'full_heal':     return member.status !== null;
+      case 'ether':
+      case 'max_ether':
+      case 'elixir':
+      case 'max_elixir':    return !allPpFull;
+      case 'revive':        return member.currentHp <= 0;
+      case 'full_restore':  return true;
+      default:              return true;
+    }
+  };
+
   const handleMove = (move: Move) => {
     if (!isPlayerTurn || isBattleOver) return;
 
@@ -911,7 +934,12 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                         <button
                           key={member.id + i}
                           onClick={() => handleUseItemInBattle(selectedItemForPokemon, i)}
-                          className="p-4 rounded-2xl border border-white/10 bg-slate-800 hover:bg-slate-700 hover:border-white/30 flex items-center justify-between transition-all group"
+                          disabled={!isItemUsable(selectedItemForPokemon, member)}
+                          className={`p-4 rounded-2xl border border-white/10 bg-slate-800 flex items-center justify-between transition-all group ${
+                            isItemUsable(selectedItemForPokemon, member)
+                              ? 'hover:bg-slate-700 hover:border-white/30'
+                              : 'opacity-40 cursor-not-allowed'
+                          }`}
                         >
                           <div className="flex items-center gap-3">
                             <div className="font-bold group-hover:text-emerald-400 transition-colors">{member.name}</div>

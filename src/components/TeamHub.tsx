@@ -51,6 +51,29 @@ export default function TeamHub({
     setTimeout(() => setUseItemMessage(null), 2000);
   };
 
+  const isItemUsable = (itemId: string, member: BattlePokemon): boolean => {
+    const allPpFull = member.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
+    switch (itemId) {
+      case 'potion':
+      case 'super_potion':
+      case 'hyper_potion':
+        return member.currentHp > 0 && member.currentHp < member.maxHp;
+      case 'antidote':      return member.status === 'PSN';
+      case 'paralyze_heal': return member.status === 'PAR';
+      case 'awakening':     return member.status === 'SLP';
+      case 'burn_heal':     return member.status === 'BRN';
+      case 'ice_heal':      return member.status === 'FRZ';
+      case 'full_heal':     return member.status !== null;
+      case 'ether':
+      case 'max_ether':
+      case 'elixir':
+      case 'max_elixir':    return !allPpFull;
+      case 'revive':        return member.currentHp <= 0;
+      case 'full_restore':  return true;
+      default:              return true;
+    }
+  };
+
   return (
     <div className="relative h-full w-full bg-slate-900 text-white p-4 md:p-6 flex flex-col gap-4">
       {/* Progress Bar */}
@@ -297,7 +320,12 @@ export default function TeamHub({
                               <button
                                 key={pkmn.id + i}
                                 onClick={() => setSelectedPokemonForItem(i)}
-                                className="bg-slate-800 hover:bg-indigo-600 text-white font-bold py-1 px-2 rounded text-xs transition-colors"
+                                disabled={!isItemUsable(invItem.itemId, pkmn)}
+                                className={`bg-slate-800 text-white font-bold py-1 px-2 rounded text-xs transition-colors ${
+                                  isItemUsable(invItem.itemId, pkmn)
+                                    ? 'hover:bg-indigo-600'
+                                    : 'opacity-40 cursor-not-allowed'
+                                }`}
                               >
                                 {pkmn.name}
                               </button>
