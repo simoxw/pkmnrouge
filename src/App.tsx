@@ -103,6 +103,7 @@ export default function App() {
     const levels: Record<number, number> = {
       10: 50, 20: 55, 30: 60, 40: 65,
       50: 70, 60: 75, 70: 80, 80: 85,
+      90: 90,
     };
     return levels[roomNumber] ?? 50;
   };

@@ -46,10 +46,10 @@ const EXCLUDED_MOVE_IDS = new Set([
   'stockpile','swallow','spit-up',
   'conversion','conversion2','camouflage',
   'lock-on','mind-reader','focus-energy',
-  'haze','belch','after-you','quash',
-  'bide','frustration', 'psywave',
+  'haze','belch','after-you','quash', 'counter',
+  'bide','frustration', 'fissure','psywave',
   // avoid Mud Sport as well
-  'mud-sport',
+  'mud-sport', 'wonder-room', 
 ]);
 
 export async function fetchPokemonData(id: number): Promise<Pokemon> {
