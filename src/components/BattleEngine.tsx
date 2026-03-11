@@ -663,7 +663,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 Ultima mossa nemico: <span className="text-indigo-400">{lastEnemyMove.name}</span>
               </div>
               {/* Recent battle messages */}
-              {logs.slice(0, 2).map((log, index) => (
+              {logs.slice(0, 3).map((log, index) => (
                 <motion.div
                   key={log.id}
                   initial={{ opacity: 0, y: 10 }}

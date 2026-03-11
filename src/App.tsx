@@ -170,7 +170,14 @@ export default function App() {
         const teamSize = Math.min(6, Math.floor(roomNumber / 10));
         enemiesToFetch = isBossRoom.slice(0, teamSize);
       } else {
-        enemiesToFetch = [Math.floor(Math.random() * 493) + 1];
+        const enemyCount = roomNumber >= 91 ? 5
+          : roomNumber >= 71 ? 4
+          : roomNumber >= 51 ? 3
+          : roomNumber >= 21 ? 2
+          : 1;
+        enemiesToFetch = Array.from({ length: enemyCount },
+          () => Math.floor(Math.random() * 649) + 1
+        );
       }
 
       const fetchedEnemies = await Promise.all(enemiesToFetch.map(async (id) => {
