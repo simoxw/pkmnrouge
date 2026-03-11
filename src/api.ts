@@ -50,6 +50,37 @@ const EXCLUDED_MOVE_IDS = new Set([
   'bide','frustration', 'fissure','psywave',
   // avoid Mud Sport as well
   'mud-sport', 'wonder-room', 
+  // Mosse che copiano/riusano altre mosse
+'transform','mirror-move','mimic','sketch','copycat','me-first',
+'assist','metronome','sleep-talk','snore',
+// Mosse con potenza variabile non calcolabile
+'magnitude','present','natural-gift','hidden-power',
+'weather-ball','judgment','techno-blast','revelation-dance',
+// Mosse con contatore interno
+'fury-cutter','rollout','ice-ball','echoed-voice',
+'triple-kick','beat-up','punishment','stored-power',
+// Mosse che dipendono dal peso
+'grass-knot','low-kick','heavy-slam','heat-crash',
+// Mosse HP fissi o percentuali
+'sonic-boom','dragon-rage','night-shade','seismic-toss',
+'super-fang','guillotine','horn-drill','sheer-cold',
+// Mosse con effetti speciali non implementati
+'false-swipe','final-gambit','endeavor','pain-split',
+'future-sight','doom-desire','mirror-coat','metal-burst',
+'shell-trap','mat-block',
+// Mosse campo/terrain
+'gravity','magic-room','grassy-terrain','misty-terrain',
+'electric-terrain','psychic-terrain',
+// Stat swap/split
+'power-trick','power-split','guard-split','guard-swap',
+'power-swap','heart-swap','speed-swap','topsy-turvy',
+// Altre con effetti non gestibili
+'recycle','fling','bestow','embargo','heal-block',
+'lucky-chant','tailwind','charge','ingrain','aqua-ring',
+'leech-seed','curse','nightmare','yawn',
+'instruct','follow-me','rage-powder','spotlight',
+'ally-switch','crafty-shield','electrify','acrobatics',
+'facade','kings-shield','spiky-shield','baneful-bunker',
 ]);
 
 export async function fetchPokemonData(id: number): Promise<Pokemon> {
