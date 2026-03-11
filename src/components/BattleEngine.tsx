@@ -575,7 +575,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       {/* Battle Arena */}
       <div className="flex-1 flex flex-col justify-start md:justify-between relative overflow-hidden gap-1 md:gap-4">
         {/* Enemy Side */}
-        <div className="flex justify-end items-start p-1 md:p-4 relative flex-shrink-0">
+        <div className="flex justify-between items-start p-1 md:p-4 relative flex-shrink-0">
           {activeEffect?.side === 'enemy' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -669,7 +669,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             <PokemonSprite
               id={enemy.id}
               name={enemy.name}
-              className="w-34 h-34 md:w-50 md:h-50 ml-1 md:ml-4"
+              className="w-36 h-36 md:w-56 md:h-56 ml-1 md:ml-4"
             />
           </motion.div>
         </div>
@@ -707,7 +707,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         </div>
 
         {/* Player Side */}
-        <div className="flex justify-start items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4 flex-shrink-0">
+        <div className="flex justify-between items-end p-1 md:p-4 relative mt-auto md:mt-0 md:self-auto gap-1 md:gap-4 flex-shrink-0">
           {activeEffect?.side === 'player' && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
               <AnimatePresence>
@@ -742,7 +742,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               id={player.id}
               name={player.name}
               isBack={true}
-              className="w-36 h-36 md:w-64 md:h-64 mr-1 md:mr-4"
+              className="w-40 h-40 md:w-64 md:h-64 mr-1 md:mr-4"
             />
           </motion.div>
           <motion.div
