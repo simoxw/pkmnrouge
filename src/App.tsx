@@ -29,6 +29,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
   const [pendingMove, setPendingMove] = useState<{ pokemonIndex: number, newMove: any } | null>(null);
+  const [pendingNextRoom, setPendingNextRoom] = useState<number | null>(null);
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem('pkmrouge_settings');
     return saved ? JSON.parse(saved) : { soundEnabled: true, musicEnabled: true };
@@ -252,14 +253,15 @@ export default function App() {
       const nextRoom = roomNumber + 1;
       updateGameStats(nextRoom, newLevel);
 
-      // Move Learning every 5 levels
-      if (newLevel % 5 === 0) {
+      // Move Learning every 5 levels (only when actually leveling up past a multiple of 5)
+      if (newLevel % 5 === 0 && newLevel > oldLevel) {
         setLoading(true);
         try {
           const currentMoveIds = activePkmn.moves.map(m => m.id);
           const newMove = await fetchNewMove(activePkmn.id, currentMoveIds);
           if (newMove) {
             setPendingMove({ pokemonIndex: 0, newMove });
+            setPendingNextRoom(nextRoom);
             setGameState('LEARN_MOVE');
             setLoading(false);
             return; // Wait for move choice
@@ -303,9 +305,22 @@ export default function App() {
     }
 
     setPendingMove(null);
-    
-    // Continue to next state (go to HUB)
-    setGameState('HUB');
+
+    const roomToSet = pendingNextRoom ?? roomNumber + 1;
+    setPendingNextRoom(null);
+
+    if (roomToSet > 100) {
+      setGameState('GAME_OVER');
+      return;
+    }
+    setRoomNumber(roomToSet);
+
+    const isBossFloor = BOSS_ENCOUNTERS[roomToSet - 1];
+    if (isBossFloor) {
+      setGameState('RECRUITMENT');
+    } else {
+      setGameState('HUB');
+    }
   };
 
   const restartGame = () => {

@@ -295,9 +295,13 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     const message = onUseItem(itemId, pokemonIndex);
     addLog(message, 'status');
 
-    // Sync local player state with the updated party[0] managed by App.tsx
+    // Applica l'effetto direttamente sullo stato locale — party[0] è stale per via dell'async
     if (pokemonIndex === 0) {
-      setPlayer(prev => ({ ...prev, ...party[0] }));
+      const item = ITEMS.find(i => i.id === itemId);
+      if (item) {
+        const { updatedPokemon } = item.effect(player);
+        setPlayer(updatedPokemon);
+      }
     }
 
     setShowBagMenu(false);
