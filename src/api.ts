@@ -43,7 +43,7 @@ const EXCLUDED_MOVE_IDS = new Set([
   'baton-pass','encore','taunt','torment','trick-room',
   'perish-song','destiny-bond','spite','grudge',
   'trick','switcheroo','skill-swap','worry-seed',
-  'stockpile','swallow','spit-up',
+  'stockpile','swallow','spit-up', 'focus-punch', 
   'conversion','conversion2','camouflage',
   'lock-on','mind-reader','focus-energy',
   'haze','belch','after-you','quash', 'counter',

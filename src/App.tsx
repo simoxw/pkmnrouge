@@ -105,7 +105,7 @@ export default function App() {
       50: 70, 60: 75, 70: 80, 80: 85,
       90: 90,
     };
-    return levels[roomNumber] ?? 50;
+    return levels[roomNumber -1] ?? 50;
   };
 
   const handlePokemonSelect = (pokemon: Pokemon) => {
