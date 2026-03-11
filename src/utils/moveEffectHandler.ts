@@ -232,6 +232,9 @@ export class MoveEffectHandler {
     const result: MoveEffectResult = { ...dmgResult, messages: [] };
     result.messages.push(`${attacker.name} usa ${move.name}!`);
 
+    // Se la mossa non ha effetto, non applicare stati alterati
+    if (dmgResult.effectiveness === 0) return result;
+
     // Chance to apply status
     if (move.ailment) {
       const chance = move.ailmentChance || 10;
