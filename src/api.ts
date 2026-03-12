@@ -31,56 +31,93 @@ const formatMove = (moveData: any): Move => {
 };
 
 const EXCLUDED_MOVE_IDS = new Set([
-  'protect','detect','endure','quick-guard','wide-guard',
-  'substitute','splash','celebrate','hold-hands',
-  'confuse-ray','swagger','flatter','supersonic','teeter-dance',
-  'attract','captivate',
-  'sunny-day','rain-dance','sandstorm','hail','snow',
-  'spikes','stealth-rock','toxic-spikes','sticky-web',
-  'whirlwind','roar','circle-throw','dragon-tail',
-  'mean-look','block','spider-web',
-  'reflect','light-screen','aurora-veil','safeguard','mist',
-  'baton-pass','encore','taunt','torment','trick-room',
-  'perish-song','destiny-bond','spite','grudge',
-  'trick','switcheroo','skill-swap','worry-seed',
-  'stockpile','swallow','spit-up', 'focus-punch', 
-  'conversion','conversion2','camouflage',
-  'lock-on','mind-reader','focus-energy',
-  'haze','belch','after-you','quash', 'counter',
-  'bide','frustration', 'fissure','psywave',
-  // avoid Mud Sport as well
-  'mud-sport', 'wonder-room', 
-  // Mosse che copiano/riusano altre mosse
-'transform','mirror-move','mimic','sketch','copycat','me-first',
-'assist','metronome','sleep-talk','snore',
-// Mosse con potenza variabile non calcolabile
-'magnitude','present','natural-gift','hidden-power',
-'weather-ball','judgment','techno-blast','revelation-dance',
-// Mosse con contatore interno
-'fury-cutter','rollout','ice-ball','echoed-voice',
-'triple-kick','beat-up','punishment','stored-power',
-// Mosse che dipendono dal peso
-'grass-knot','low-kick','heavy-slam','heat-crash',
-// Mosse HP fissi o percentuali
-'sonic-boom','dragon-rage','night-shade','seismic-toss',
-'super-fang','guillotine','horn-drill','sheer-cold',
-// Mosse con effetti speciali non implementati
-'false-swipe','final-gambit','endeavor','pain-split',
-'future-sight','doom-desire','mirror-coat','metal-burst',
-'shell-trap','mat-block',
-// Mosse campo/terrain
-'gravity','magic-room','grassy-terrain','misty-terrain',
-'electric-terrain','psychic-terrain',
-// Stat swap/split
-'power-trick','power-split','guard-split','guard-swap',
-'power-swap','heart-swap','speed-swap','topsy-turvy',
-// Altre con effetti non gestibili
-'recycle','fling','bestow','embargo','heal-block',
-'lucky-chant','tailwind','charge','ingrain','aqua-ring',
-'leech-seed','curse','nightmare','yawn',
-'instruct','follow-me','rage-powder','spotlight',
-'ally-switch','crafty-shield','electrify','acrobatics',
-'facade','kings-shield','spiky-shield','baneful-bunker',
+  // --- PROTEZIONE E SOSTITUTI ---
+  'protect', 'detect', 'endure', 'quick-guard', 'wide-guard',
+  'substitute', 'splash', 'celebrate', 'hold-hands',
+  'kings-shield', 'spiky-shield', 'baneful-bunker', 'mat-block',
+  'crafty-shield',
+
+  // --- STATI ALTERATI (Confusione/Attrazione) ---
+  'confuse-ray', 'swagger', 'flatter', 'supersonic', 'teeter-dance',
+  'attract', 'captivate',
+
+  // --- METEO ---
+  'sunny-day', 'rain-dance', 'sandstorm', 'hail', 'snow',
+
+  // --- TERRENI E CAMPI ---
+  'grassy-terrain', 'misty-terrain', 'electric-terrain', 'psychic-terrain',
+  'gravity', 'magic-room', 'wonder-room', 'mud-sport', 'water-sport',
+  'trick-room',
+
+  // --- TRAPPOLE E HAZARD ---
+  'spikes', 'stealth-rock', 'toxic-spikes', 'sticky-web',
+
+  // --- CAMBI FORZATI E FUGA ---
+  'whirlwind', 'roar', 'circle-throw', 'dragon-tail',
+  'mean-look', 'block', 'spider-web',
+  'baton-pass', 'u-turn', 'volt-switch', 'parting-shot',
+
+  // --- BARRIERE E SUPPORTO DI SQUADRA ---
+  'reflect', 'light-screen', 'aurora-veil', 'safeguard', 'mist',
+  'tailwind', 'lucky-chant', 'healing-wish', 'lunar-dance',
+  'helping-hand', 'follow-me', 'rage-powder', 'spotlight',
+  'ally-switch', 'after-you', 'quash', 'wide-guard',
+
+  // --- MOSSE DI COPIA E METRONOMO ---
+  'transform', 'mirror-move', 'mimic', 'sketch', 'copycat', 'me-first',
+  'assist', 'metronome', 'sleep-talk', 'snore', 'nature-power',
+  'instruct', 'conversion', 'conversion2', 'camouflage',
+
+  // --- POTENZA VARIABILE O NON CALCOLABILE ---
+  'magnitude', 'present', 'natural-gift', 'hidden-power',
+  'weather-ball', 'judgment', 'techno-blast', 'revelation-dance',
+  'wring-out', 'crush-grip', 'trump-card', 'flail', 'reversal',
+  'fury-cutter', 'rollout', 'ice-ball', 'echoed-voice',
+  'triple-kick', 'punishment', 'stored-power',
+  'acrobatics', 'facade', 'electrify',
+
+  // --- DIPENDENTI DAL PESO ---
+  'grass-knot', 'low-kick', 'heavy-slam', 'heat-crash',
+
+  // --- DANNO FISSO O PERCENTUALE ---
+  'sonic-boom', 'dragon-rage', 'night-shade', 'seismic-toss', 'super-fang',
+  'psywave', 'fissure', 'guillotine', 'horn-drill', 'sheer-cold',
+
+  // --- MOSSE "SUICIDE" E CONTROATTACCHI ---
+  'self-destruct', 'explosion', 'memento', 'final-gambit', 'destiny-bond',
+  'counter', 'mirror-coat', 'metal-burst', 'bide', 'focus-punch', 'shell-trap',
+  'endeavor', 'pain-split',
+
+  // --- ACCUMULATORI ---
+  'stockpile', 'swallow', 'spit-up',
+
+  // --- EFFETTI DI TURNO FUTURO ---
+  'future-sight', 'doom-desire',
+
+  // --- SCAMBIO / MODIFICA STATS ---
+  'haze', 'topsy-turvy', 'power-trick', 'power-split', 'guard-split',
+  'power-swap', 'guard-swap', 'heart-swap', 'speed-swap',
+  'skill-swap', 'role-play', 'entrainment', 'simple-beam', 'worry-seed',
+  'lock-on', 'mind-reader', 'focus-energy',
+
+  // --- CONTROLLO AVVERSARIO ---
+  'taunt', 'encore', 'torment', 'disable', 'spite', 'grudge',
+  'trick', 'switcheroo', 'fling', 'bestow', 'embargo', 'heal-block',
+  'perish-song', 'yawn',
+
+  // --- DIPENDENTI DA AMICIZIA O CONDIZIONI SPECIALI ---
+  'frustration', 'return', 'beat-up',
+
+  // --- STATUS PERSISTENTI SUL CAMPO ---
+  'leech-seed', 'ingrain', 'aqua-ring', 'curse', 'nightmare',
+  'telekinesis', 'magnet-rise', 'autotomize', 'charge',
+  'recycle', 'belch',
+
+  // --- MOSSE SPECIALI NON GESTIBILI ---
+  'false-swipe', 'healing-wish', 'lunar-dance',
+
+  // --- EMERGENZA ---
+  'struggle',
 ]);
 
 export async function fetchPokemonData(id: number): Promise<Pokemon> {
