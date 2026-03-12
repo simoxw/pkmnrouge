@@ -576,7 +576,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     <div className="relative overflow-hidden flex flex-col h-full bg-transparent text-white p-2 md:p-4 font-sans">
       <BattleBackground isBoss={isBoss} />
       {/* Battle Arena */}
-      <div className="relative z-10 flex-1 flex flex-col justify-start md:justify-between gap-1 md:gap-4">
+      <div className="relative z-10 flex-1 flex flex-col justify-start md:justify-between gap-1 md:gap-4 min-h-0">
         {/* Enemy Side */}
         <div className="flex justify-between items-start p-1 md:p-4 relative flex-shrink-0">
           {activeEffect?.side === 'enemy' && (
@@ -678,12 +678,12 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         </div>
 
         {/* Last Move Indicator */}
-        <div className="flex-1 min-h-0 overflow-y-auto flex items-start justify-center md:justify-center">
+        <div className="flex-1 min-h-0 overflow-visible flex items-start justify-center md:justify-center z-50 pointer-events-none">
           {lastEnemyMove && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col justify-center items-center py-2 space-y-1"
+              className="pointer-events-none flex flex-col justify-center items-center py-2 space-y-1"
             >
               <div className="text-center text-xs md:text-sm font-bold text-indigo-300 bg-slate-800/60 px-4 py-2 rounded-lg border border-indigo-500/30">
                 Ultima mossa nemico: <span className="text-indigo-400">{lastEnemyMove.name}</span>
@@ -815,7 +815,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
       </div>
 
       {/* Controls & Logs */}
-      <div className="h-auto md:h-64 bg-slate-950 rounded-t-3xl p-3 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-3 md:gap-6 overflow-y-auto md:overflow-y-visible">
+      <div className="flex-shrink-0 h-auto md:h-64 bg-slate-950 rounded-t-3xl p-3 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-3 md:gap-6 overflow-hidden md:overflow-hidden">
         {/* Moves Grid */}
         <div className="flex-1 grid grid-cols-2 gap-2 relative z-40">
           {hoveredMove && (
@@ -1023,9 +1023,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         </AnimatePresence>
 
         {/* Battle Log */}
-        <div className="hidden md:flex w-80 bg-black/40 rounded-xl p-4 overflow-y-auto border border-white/5 flex-col">
+        <div className="hidden md:flex w-80 bg-black/40 rounded-xl p-4 border border-white/5 flex-col min-h-0 max-h-full overflow-y-auto z-20">
           <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 font-bold">Battle Log</div>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
             <AnimatePresence initial={false}>
               {logs.map(log => (
                 <motion.div

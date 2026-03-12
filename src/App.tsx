@@ -502,17 +502,19 @@ export default function App() {
       )}
 
       {gameState === 'BATTLE' && party.length > 0 && enemyTeam.length > 0 && (
-        <BattleEngine 
-          playerPokemon={party[0]} 
-          enemyTeam={enemyTeam} 
-          party={party}
-          inventory={inventory}
-          isBoss={isBossRoomActive}
-          onBattleEnd={handleBattleEnd} 
-          onSwitch={handleSwitch}
-          onUpdatePartyMember={handleUpdatePartyMember}
-          onUseItem={handleUseItem}
-        />
+        <div className="absolute inset-0">
+          <BattleEngine 
+            playerPokemon={party[0]} 
+            enemyTeam={enemyTeam} 
+            party={party}
+            inventory={inventory}
+            isBoss={isBossRoomActive}
+            onBattleEnd={handleBattleEnd} 
+            onSwitch={handleSwitch}
+            onUpdatePartyMember={handleUpdatePartyMember}
+            onUseItem={handleUseItem}
+          />
+        </div>
       )}
 
       {gameState === 'LEARN_MOVE' && pendingMove && (
