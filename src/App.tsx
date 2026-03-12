@@ -27,6 +27,7 @@ export default function App() {
   const [money, setMoney] = useState(100);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isBossRoomActive, setIsBossRoomActive] = useState(false);
   const [pendingRecruit, setPendingRecruit] = useState<BattlePokemon | null>(null);
   const [pendingMove, setPendingMove] = useState<{ pokemonIndex: number, newMove: any } | null>(null);
   const [pendingNextRoom, setPendingNextRoom] = useState<number | null>(null);
@@ -220,6 +221,7 @@ export default function App() {
       }));
 
       setEnemyTeam(fetchedEnemies);
+      setIsBossRoomActive(!!isBossRoom);
       setGameState('BATTLE');
     } catch (error) {
       console.error("Failed to start battle:", error);
@@ -505,6 +507,7 @@ export default function App() {
           enemyTeam={enemyTeam} 
           party={party}
           inventory={inventory}
+          isBoss={isBossRoomActive}
           onBattleEnd={handleBattleEnd} 
           onSwitch={handleSwitch}
           onUpdatePartyMember={handleUpdatePartyMember}

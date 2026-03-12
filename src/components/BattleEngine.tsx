@@ -7,6 +7,7 @@ import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import PokemonSprite from './PokemonSprite';
 import StatStagesBadges from './StatStagesBadges';
+import BattleBackground from './BattleBackground';
 import { Briefcase } from 'lucide-react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 
@@ -15,13 +16,14 @@ interface BattleEngineProps {
   enemyTeam: BattlePokemon[];
   party: BattlePokemon[];
   inventory: InventoryItem[];
+  isBoss: boolean;
   onBattleEnd: (winner: 'player' | 'enemy') => void;
   onSwitch: (index: number) => void;
   onUpdatePartyMember: (index: number, updated: BattlePokemon) => void;
   onUseItem: (itemId: string, pokemonIndex: number) => string;
 }
 
-export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, onBattleEnd, onSwitch, onUpdatePartyMember, onUseItem }: BattleEngineProps) {
+export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, isBoss, onBattleEnd, onSwitch, onUpdatePartyMember, onUseItem }: BattleEngineProps) {
   const [player, setPlayer] = useState<BattlePokemon>({
     ...initialPlayer,
     status: initialPlayer.status || null,
@@ -571,9 +573,10 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-white p-2 md:p-4 font-sans">
+    <div className="relative overflow-hidden flex flex-col h-full bg-transparent text-white p-2 md:p-4 font-sans">
+      <BattleBackground isBoss={isBoss} />
       {/* Battle Arena */}
-      <div className="flex-1 flex flex-col justify-start md:justify-between relative overflow-hidden gap-1 md:gap-4">
+      <div className="relative z-10 flex-1 flex flex-col justify-start md:justify-between gap-1 md:gap-4">
         {/* Enemy Side */}
         <div className="flex justify-between items-start p-1 md:p-4 relative flex-shrink-0">
           {activeEffect?.side === 'enemy' && (
