@@ -849,6 +849,16 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                     <span className="font-bold text-white uppercase text-[7px]">{hoveredMove.damageClass?.slice(0, 3)}</span>
                   </div>
                 </div>
+
+                {hoveredMove.statChanges && hoveredMove.statChanges.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1 border-t border-indigo-500/20 pt-1.5">
+                    {hoveredMove.statChanges.map((sc, i) => (
+                      <span key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${sc.change > 0 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'}`}>
+                        {sc.stat.toUpperCase()} {sc.change > 0 ? '+' : ''}{sc.change} {sc.target === 'user' ? '(tu)' : '(nemico)'}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
