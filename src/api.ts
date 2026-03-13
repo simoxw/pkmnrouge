@@ -61,7 +61,7 @@ const EXCLUDED_MOVE_IDS = new Set([
   'reflect', 'light-screen', 'aurora-veil', 'safeguard', 'mist',
   'tailwind', 'lucky-chant', 'healing-wish', 'lunar-dance',
   'helping-hand', 'follow-me', 'rage-powder', 'spotlight',
-  'ally-switch', 'after-you', 'quash', 'wide-guard',
+  'ally-switch', 'after-you', 'quash', 'wide-guard', 'aromatherapy',
 
   // --- MOSSE DI COPIA E METRONOMO ---
   'transform', 'mirror-move', 'mimic', 'sketch', 'copycat', 'me-first',
@@ -181,7 +181,7 @@ export async function fetchNewMove(pokemonId: string, currentMoveIds: string[]):
   const data = await response.json();
 
   const pokemonTypes = data.types.map((t: any) => t.type.name);
-  
+
   const availableMoves = data.moves.filter(
     (m: any) => !currentMoveIds.includes(m.move.name) && !EXCLUDED_MOVE_IDS.has(m.move.name)
   );
@@ -189,12 +189,12 @@ export async function fetchNewMove(pokemonId: string, currentMoveIds: string[]):
 
   // Try to find a move that matches one of the pokemon's types
   let filteredMoves = [];
-  
+
   // We need to check the type of each move, which requires another fetch.
   // To avoid hundreds of fetches, we'll pick a subset of available moves and check them.
   const subset = availableMoves.sort(() => 0.5 - Math.random()).slice(0, 10);
   const fetchedMoves = [];
-  
+
   for (const m of subset) {
     const moveRes = await fetch(m.move.url);
     const moveData = await moveRes.json();

@@ -192,12 +192,14 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     // Effectiveness per attacchi del giocatore: badge sotto gli HP avversario + log.
     if (effectResult.effectiveness && effectResult.effectiveness > 1) {
       const msg = 'È superefficace!';
+      playSound('hitSuper');
       setPlayerEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setPlayerEffectivenessMessage(null), 2000);
     }
     if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
       const msg = 'Non è molto efficace...';
+      playSound('hitWeak');
       setPlayerEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setPlayerEffectivenessMessage(null), 2000);
@@ -419,12 +421,14 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
 
     if (effectResult.effectiveness && effectResult.effectiveness > 1) {
       const msg = 'È superefficace!';
+      playSound('hitSuper');
       setEnemyEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setEnemyEffectivenessMessage(null), 2000);
     }
     if (effectResult.effectiveness && effectResult.effectiveness < 1 && effectResult.effectiveness > 0) {
       const msg = 'Non è molto efficace...';
+      playSound('hitWeak');
       setEnemyEffectivenessMessage(msg);
       addLog(msg, 'status');
       setTimeout(() => setEnemyEffectivenessMessage(null), 2000);

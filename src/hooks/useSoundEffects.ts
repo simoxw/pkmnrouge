@@ -1,10 +1,12 @@
 import { useCallback, useRef } from 'react';
 
 const AUDIO_URLS = {
-  click: '/audio/pokemon_click.mp3', // placeholder finché non hai il file click
-  hit: null,     // da aggiungere quando hai il file
-  victory: null, // da aggiungere quando hai il file
-  money: '/audio/pokemon_money.mp3',
+  money: `${import.meta.env.BASE_URL}audio/pokemon_money.mp3`,
+  hitSuper: `${import.meta.env.BASE_URL}audio/hit-super-effective.mp3`,
+  hitWeak: `${import.meta.env.BASE_URL}audio/hit-weak-not-very-effective.mp3`,
+  hit: null,
+  victory: null,
+  click: null,
 };
 
 export function useSoundEffects(enabled: boolean = true) {

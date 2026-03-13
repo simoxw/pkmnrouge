@@ -45,13 +45,14 @@ export default function App() {
   const musicRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    const base = import.meta.env.BASE_URL;
     const tracks: Partial<Record<GameState, string>> = {
-      MAIN_MENU: '/audio/pokemon_red_opening.mp3',
-      HUB: '/audio/pokemon_trap_mix.mp3',
-      BATTLE: '/audio/pokemon_battle.mp3',
-      SHOP: '/audio/pokemon_trap_mix.mp3',
-      RECRUITMENT: '/audio/pokemon_trap_mix.mp3',
-      LEARN_MOVE: '/audio/pokemon_trap_mix.mp3',
+      MAIN_MENU: `${base}audio/pokemon_red_opening.mp3`,
+      HUB: `${base}audio/pokemon_trap_mix.mp3`,
+      SHOP: `${base}audio/pokemon_trap_mix.mp3`,
+      RECRUITMENT: `${base}audio/pokemon_trap_mix.mp3`,
+      LEARN_MOVE: `${base}audio/pokemon_trap_mix.mp3`,
+      BATTLE: isBossRoomActive ? `${base}audio/team_galactic.mp3` : `${base}audio/pokemon_battle.mp3`,
     };
 
     const trackUrl = tracks[gameState];
@@ -79,27 +80,7 @@ export default function App() {
     musicRef.current = audio;
     audio.play().catch(e => console.log('Music play failed:', e));
 
-  }, [gameState, settings.musicEnabled]);
-
-  useEffect(() => {
-    if (gameState !== 'BATTLE') return;
-    if (!settings.musicEnabled) return;
-
-    const trackUrl = isBossRoomActive
-      ? '/audio/team_galactic.mp3'
-      : '/audio/pokemon_battle.mp3';
-
-    if (musicRef.current?.src.endsWith(trackUrl)) return;
-
-    if (musicRef.current) musicRef.current.pause();
-
-    const audio = new Audio(trackUrl);
-    audio.loop = true;
-    audio.volume = 0.3;
-    musicRef.current = audio;
-    audio.play().catch(e => console.log('Music play failed:', e));
-
-  }, [gameState, isBossRoomActive, settings.musicEnabled]);
+  }, [gameState, settings.musicEnabled, isBossRoomActive]);
 
   // handle persistent storage and provide helpers
   const { hasSave, loadGame } = useGameSave({ party, roomNumber, money, inventory, gameState });
