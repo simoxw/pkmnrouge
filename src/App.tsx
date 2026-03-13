@@ -187,8 +187,9 @@ export default function App() {
 
         // Boss buffs must live on the instance created here (not recalculated on switches).
         const scalingFactor = Math.floor((roomNumber - 1) / 10);
-        const bossHpMultiplier = isBossRoom ? (1.5 + scalingFactor * 0.1) : 1;
-        const bossStatMultiplier = isBossRoom ? (1.15 + scalingFactor * 0.05) : 1;
+        const cappedScaling = Math.min(scalingFactor, 4); // cap a stanza 50
+        const bossHpMultiplier = isBossRoom ? (1.5 + cappedScaling * 0.1) : 1;
+        const bossStatMultiplier = isBossRoom ? (1.15 + cappedScaling * 0.03) : 1;
 
         const actualStats = isBossRoom ? {
           ...baseActualStats,
@@ -251,8 +252,9 @@ export default function App() {
 
   const handleBattleEnd = async (winner: 'player' | 'enemy') => {
     if (winner === 'player') {
-      // Award money
-      setMoney(prev => prev + 50);
+      // Award money (and check if current floor is boss for bonus/recruitment)
+      const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
+      setMoney(prev => prev + 50 + (isBossFloor ? 50 : 0));
 
       // Level Up & Heal Active Pokemon
       const updatedParty = [...party];
@@ -263,6 +265,13 @@ export default function App() {
       const newLevel = Math.min(100, oldLevel + 1);
       activePkmn = updateStats(activePkmn, newLevel);
       updatedParty[0] = activePkmn; // Assign the updated Pokémon back
+
+      // Stanza 71+: level-up silenzioso a tutta la panchina
+      if (roomNumber >= 71) {
+        for (let i = 1; i < updatedParty.length; i++) {
+          updatedParty[i] = updateStats(updatedParty[i], Math.min(100, updatedParty[i].level + 1));
+        }
+      }
       
       // Apply Rest (30% healing to all)
       const restedParty = applyRest(updatedParty);
@@ -299,7 +308,6 @@ export default function App() {
       setRoomNumber(nextRoom);
 
       // Check for Recruitment (Boss floors 10, 20, 30, 40, 50, or every boss after 60)
-      const isBossFloor = BOSS_ENCOUNTERS[roomNumber];
       if (isBossFloor) {
         setGameState('RECRUITMENT');
       } else {
