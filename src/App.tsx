@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Pokemon, BattlePokemon, GameState, SaveData, GameStats, Settings } from './types';
 import MainMenu from './components/MainMenu';
 import DraftScreen from './components/DraftScreen';
@@ -6,7 +6,7 @@ import TeamHub from './components/TeamHub';
 import RoomNavigation from './components/RoomNavigation';
 import BattleEngine from './components/BattleEngine';
 import ShopScreen from './components/ShopScreen';
-import { RotateCcw, Download, Loader2, ShoppingBag } from 'lucide-react';
+import { RotateCcw, Download, Loader2, ShoppingBag, Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fetchPokemonData, fetchNewMove } from './api';
 import { BOSS_ENCOUNTERS, ITEMS } from './constants';
@@ -42,11 +42,70 @@ export default function App() {
       : { maxRoomReached: 0, mostUsedPokemonId: '', maxLevelAchieved: 0 };
   });
 
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const tracks: Partial<Record<GameState, string>> = {
+      MAIN_MENU: '/audio/pokemon_red_opening.mp3',
+      HUB: '/audio/pokemon_trap_mix.mp3',
+      BATTLE: '/audio/pokemon_battle.mp3',
+      SHOP: '/audio/pokemon_trap_mix.mp3',
+      RECRUITMENT: '/audio/pokemon_trap_mix.mp3',
+      LEARN_MOVE: '/audio/pokemon_trap_mix.mp3',
+    };
+
+    const trackUrl = tracks[gameState];
+
+    if (!settings.musicEnabled) {
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
+      }
+      return;
+    }
+
+    if (!trackUrl) return;
+
+    // Evita di riavviare lo stesso brano
+    if (musicRef.current?.src.endsWith(trackUrl)) return;
+
+    if (musicRef.current) {
+      musicRef.current.pause();
+    }
+
+    const audio = new Audio(trackUrl);
+    audio.loop = true;
+    audio.volume = 0.3;
+    musicRef.current = audio;
+    audio.play().catch(e => console.log('Music play failed:', e));
+
+  }, [gameState, settings.musicEnabled]);
+
+  useEffect(() => {
+    if (gameState !== 'BATTLE') return;
+    if (!settings.musicEnabled) return;
+
+    const trackUrl = isBossRoomActive
+      ? '/audio/team_galactic.mp3'
+      : '/audio/pokemon_battle.mp3';
+
+    if (musicRef.current?.src.endsWith(trackUrl)) return;
+
+    if (musicRef.current) musicRef.current.pause();
+
+    const audio = new Audio(trackUrl);
+    audio.loop = true;
+    audio.volume = 0.3;
+    musicRef.current = audio;
+    audio.play().catch(e => console.log('Music play failed:', e));
+
+  }, [gameState, isBossRoomActive, settings.musicEnabled]);
+
   // handle persistent storage and provide helpers
   const { hasSave, loadGame } = useGameSave({ party, roomNumber, money, inventory, gameState });
   
   // sound effects for UI interactions
-  const { playSound } = useSoundEffects(true);
+  const { playSound } = useSoundEffects(settings.soundEnabled);
 
   const handleLoadGame = () => {
     playSound('click');
@@ -417,6 +476,27 @@ export default function App() {
         </div>
       )}
 
+      {/* Bottone audio fisso */}
+      <button
+        onClick={() => {
+          const newValue = !(settings.soundEnabled && settings.musicEnabled);
+          const next = { ...settings, soundEnabled: newValue, musicEnabled: newValue };
+          setSettings(next);
+          localStorage.setItem('pkmrouge_settings', JSON.stringify(next));
+          if (!newValue) {
+            musicRef.current?.pause();
+          } else {
+            musicRef.current?.play().catch(() => {});
+          }
+        }}
+        className="fixed left-2 top-1/2 -translate-y-1/2 z-[200] bg-slate-800/80 backdrop-blur-sm border border-white/10 text-white p-2 rounded-full shadow-lg"
+      >
+        {settings.soundEnabled && settings.musicEnabled
+          ? <Volume2 size={18} />
+          : <VolumeX size={18} />
+        }
+      </button>
+
       {gameState === 'MAIN_MENU' && (
         <MainMenu 
           onStart={handleStartGame}
@@ -471,7 +551,8 @@ export default function App() {
           money={money}
           roomNumber={roomNumber}
           onBuy={handleBuyItem} 
-          onExit={() => setGameState('HUB')} 
+          onExit={() => setGameState('HUB')}
+          playSound={playSound}
         />
       )}
 
@@ -517,6 +598,7 @@ export default function App() {
             party={party}
             inventory={inventory}
             isBoss={isBossRoomActive}
+            soundEnabled={settings.soundEnabled}
             onBattleEnd={handleBattleEnd} 
             onSwitch={handleSwitch}
             onUpdatePartyMember={handleUpdatePartyMember}

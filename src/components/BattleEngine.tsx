@@ -17,13 +17,14 @@ interface BattleEngineProps {
   party: BattlePokemon[];
   inventory: InventoryItem[];
   isBoss: boolean;
+  soundEnabled: boolean;
   onBattleEnd: (winner: 'player' | 'enemy') => void;
   onSwitch: (index: number) => void;
   onUpdatePartyMember: (index: number, updated: BattlePokemon) => void;
   onUseItem: (itemId: string, pokemonIndex: number) => string;
 }
 
-export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, isBoss, onBattleEnd, onSwitch, onUpdatePartyMember, onUseItem }: BattleEngineProps) {
+export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, isBoss, soundEnabled, onBattleEnd, onSwitch, onUpdatePartyMember, onUseItem }: BattleEngineProps) {
   const [player, setPlayer] = useState<BattlePokemon>({
     ...initialPlayer,
     status: initialPlayer.status || null,
@@ -52,7 +53,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   const [enemyEffectivenessMessage, setEnemyEffectivenessMessage] = useState<string | null>(null);
 
   // sound effects
-  const { playSound } = useSoundEffects(true);
+  const { playSound } = useSoundEffects(soundEnabled);
 
   const triggerEffect = (type: string, side: 'player' | 'enemy', text?: string) => {
     setActiveEffect({ type, side, text });
@@ -60,7 +61,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   };
 
   const playCry = (url?: string) => {
-    if (!url) return;
+    if (!url || !soundEnabled) return;
     const audio = new Audio(url);
     audio.volume = 0.4;
     audio.play().catch(e => console.log("Audio play failed", e));

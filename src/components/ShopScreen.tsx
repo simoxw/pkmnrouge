@@ -9,9 +9,10 @@ interface ShopScreenProps {
   roomNumber: number;
   onBuy: (item: Item) => void;
   onExit: () => void;
+  playSound: (sound: string) => void;
 }
 
-export default function ShopScreen({ money, roomNumber, onBuy, onExit }: ShopScreenProps) {
+export default function ShopScreen({ money, roomNumber, onBuy, onExit, playSound }: ShopScreenProps) {
   const [shopItems, setShopItems] = useState<Item[]>([]);
   const [purchaseFeedback, setPurchaseFeedback] = useState<string | null>(null);
 
@@ -41,6 +42,7 @@ export default function ShopScreen({ money, roomNumber, onBuy, onExit }: ShopScr
   const handleBuy = (item: Item) => {
     if (money >= item.price) {
       onBuy(item);
+      playSound('money');
       setPurchaseFeedback(`Hai comprato ${item.name}!`);
       setTimeout(() => setPurchaseFeedback(null), 2000);
     }

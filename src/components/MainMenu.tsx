@@ -145,35 +145,21 @@ export default function MainMenu({ onStart, onLoadGame, hasSave }: MainMenuProps
                 <div className="flex items-center justify-between p-4 bg-slate-900 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <Volume2 size={20} className="text-indigo-400" />
-                    <span className="font-bold text-white">Suoni</span>
+                    <span className="font-bold text-white">Audio</span>
                   </div>
                   <button
-                    onClick={() => handleSettingsChange('soundEnabled', !settings.soundEnabled)}
+                    onClick={() => {
+                      const newValue = !(settings.soundEnabled && settings.musicEnabled);
+                      handleSettingsChange('soundEnabled', newValue);
+                      handleSettingsChange('musicEnabled', newValue);
+                    }}
                     className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                      settings.soundEnabled ? 'bg-indigo-600' : 'bg-slate-700'
+                      settings.soundEnabled && settings.musicEnabled ? 'bg-indigo-600' : 'bg-slate-700'
                     }`}
                   >
                     <span
                       className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                        settings.soundEnabled ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-xl border border-white/10">
-                  <div className="flex items-center gap-3">
-                    <Music size={20} className="text-purple-400" />
-                    <span className="font-bold text-white">Musica</span>
-                  </div>
-                  <button
-                    onClick={() => handleSettingsChange('musicEnabled', !settings.musicEnabled)}
-                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                      settings.musicEnabled ? 'bg-indigo-600' : 'bg-slate-700'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                        settings.musicEnabled ? 'translate-x-7' : 'translate-x-1'
+                        settings.soundEnabled && settings.musicEnabled ? 'translate-x-7' : 'translate-x-1'
                       }`}
                     />
                   </button>
