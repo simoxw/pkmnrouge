@@ -98,12 +98,12 @@ const EXCLUDED_MOVE_IDS = new Set([
   'haze', 'topsy-turvy', 'power-trick', 'power-split', 'guard-split',
   'power-swap', 'guard-swap', 'heart-swap', 'speed-swap',
   'skill-swap', 'role-play', 'entrainment', 'simple-beam', 'worry-seed',
-  'lock-on', 'mind-reader', 'focus-energy',
+  'lock-on', 'mind-reader', 'focus-energy', 'psych-up',
 
   // --- CONTROLLO AVVERSARIO ---
   'taunt', 'encore', 'torment', 'disable', 'spite', 'grudge',
   'trick', 'switcheroo', 'fling', 'bestow', 'embargo', 'heal-block',
-  'perish-song', 'yawn',
+  'perish-song', 'yawn', 'imprison',
 
   // --- DIPENDENTI DA AMICIZIA O CONDIZIONI SPECIALI ---
   'frustration', 'return', 'beat-up',
@@ -114,7 +114,7 @@ const EXCLUDED_MOVE_IDS = new Set([
   'recycle', 'belch',
 
   // --- MOSSE SPECIALI NON GESTIBILI ---
-  'false-swipe', 'healing-wish', 'lunar-dance', 'rest', 'wish',
+  'false-swipe', 'healing-wish', 'lunar-dance', 'wish',
 
   // --- EMERGENZA ---
   'struggle',
