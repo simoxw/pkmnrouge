@@ -439,6 +439,6 @@ export const BOSS_ENCOUNTERS: Record<number, number[]> = {
   60: [249, 250, 384, 386, 382, 383], // Lugia, Ho-Oh, Rayquaza, Deoxys, Kyogre, Groudon
   70: [485, 486, 492, 380, 381, 150], // Heatran, Regigigas, Shaymin, Latias, Latios, Mewtwo
   80: [145, 144, 146, 378, 377, 379], // Zapdos, Articuno, Moltres, Regice, Regirock, Registeel
-  90: [487, 151, 382, 384, 386, 249], // Giratina, Mew, Kyogre, Rayquaza, Deoxys, Lugia
-  100: [150, 493, 242, 386, 151, 486] // Mewtwo, Arceus, Blissey, Deoxys, Mew, Regigigas
+  90: [638, 639, 640, 641, 642, 645], // Cobalion, Terrakion, Virizion, Tornadus, Thundurus, Landorus
+  100: [643, 644, 646, 647, 493, 150], // Reshiram, Zekrom, Kyurem, Keldeo, Arceus, Mewtwo
 };
