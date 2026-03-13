@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import { getActualStats } from '../utils/battleMechanics';
+import { getTypeColor } from '../utils/typeColors';
 
 interface DraftScreenProps {
   onSelect: (pokemon: Pokemon) => void;
@@ -93,7 +94,7 @@ export default function DraftScreen({ onSelect, title = "Scegli il tuo Starter",
               
               <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4 justify-center flex-wrap">
                 {pkmn.types.map(t => (
-                  <span key={t} className="text-[8px] sm:text-[10px] uppercase font-bold bg-slate-800 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/5">
+                  <span key={t} className={`text-[8px] sm:text-[10px] uppercase font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border ${getTypeColor(t)}`}>
                     {t}
                   </span>
                 ))}

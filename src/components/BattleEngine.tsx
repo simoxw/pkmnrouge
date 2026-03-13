@@ -10,6 +10,7 @@ import StatStagesBadges from './StatStagesBadges';
 import BattleBackground from './BattleBackground';
 import { Briefcase } from 'lucide-react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
+import { getTypeColor } from '../utils/typeColors';
 
 interface BattleEngineProps {
   playerPokemon: BattlePokemon;
@@ -633,7 +634,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {enemy.types.map(type => (
-                    <span key={`enemy-type-${type}`} className="text-[8px] md:text-[10px] uppercase font-bold bg-slate-700/70 px-2 py-0.5 rounded-full border border-white/10">
+                    <span key={`enemy-type-${type}`} className={`text-[8px] md:text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${getTypeColor(type)}`}>
                       {type}
                     </span>
                   ))}
@@ -775,7 +776,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {player.types.map(type => (
-                    <span key={`player-type-${type}`} className="text-[8px] md:text-[10px] uppercase font-bold bg-slate-700/70 px-2 py-0.5 rounded-full border border-white/10">
+                    <span key={`player-type-${type}`} className={`text-[8px] md:text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${getTypeColor(type)}`}>
                       {type}
                     </span>
                   ))}
@@ -832,7 +833,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               <div className="bg-slate-800 border border-indigo-500/30 px-4 py-3 rounded-xl shadow-2xl text-[11px] md:text-base max-w-md">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-indigo-300 uppercase text-[11px] md:text-sm">{hoveredMove.name}</span>
-                  <span className="bg-slate-700 px-2 py-1 rounded text-[9px] md:text-[11px] uppercase font-bold">{hoveredMove.type}</span>
+                  <span className={`px-2 py-1 rounded text-[9px] md:text-[11px] uppercase font-bold border ${getTypeColor(hoveredMove.type)}`}>{hoveredMove.type}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-[9px] md:text-[10px] font-mono">
                   <div className="flex flex-col">

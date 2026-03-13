@@ -4,6 +4,7 @@ import { ITEMS } from '../constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { Users, Backpack, Play, ChevronUp, ChevronDown, Map as MapIcon, Trophy, Menu } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import { getTypeColor } from '../utils/typeColors';
 
 interface TeamHubProps {
   party: BattlePokemon[];
@@ -192,7 +193,7 @@ export default function TeamHub({
                       </div>
                       <div className="flex flex-wrap gap-1 mt-0.5">
                         {pkmn.types.map(type => (
-                          <span key={`team-type-${pkmn.id}-${type}`} className="text-[8px] uppercase font-bold bg-slate-700/70 px-2 py-0.5 rounded-full border border-white/10">
+                          <span key={`team-type-${pkmn.id}-${type}`} className={`text-[8px] uppercase font-bold px-2 py-0.5 rounded-full border ${getTypeColor(type)}`}>
                             {type}
                           </span>
                         ))}
