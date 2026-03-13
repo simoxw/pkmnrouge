@@ -315,16 +315,15 @@ export class MoveEffectHandler {
   // Check if pokemon can act due to status conditions
   static canAct(pokemon: BattlePokemon): { canAct: boolean; messages: string[] } {
     if (pokemon.status === 'SLP') {
-      if (pokemon.sleepTurns && pokemon.sleepTurns > 0) {
-        return {
-          canAct: false,
-          messages: [`${pokemon.name} sta dormendo profondamente...`]
-        };
-      } else {
-        // Wake up
+      if (Math.random() < 0.25) {
         return {
           canAct: true,
           messages: [`${pokemon.name} si è svegliato!`]
+        };
+      } else {
+        return {
+          canAct: false,
+          messages: [`${pokemon.name} sta dormendo profondamente...`]
         };
       }
     }

@@ -114,7 +114,7 @@ const EXCLUDED_MOVE_IDS = new Set([
   'recycle', 'belch',
 
   // --- MOSSE SPECIALI NON GESTIBILI ---
-  'false-swipe', 'healing-wish', 'lunar-dance',
+  'false-swipe', 'healing-wish', 'lunar-dance', 'rest', 'wish',
 
   // --- EMERGENZA ---
   'struggle',
