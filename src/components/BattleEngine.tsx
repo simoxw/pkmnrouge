@@ -878,7 +878,7 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
             >
               <span className="font-bold uppercase tracking-wider text-xs md:text-sm">{move.name}</span>
               <div className="flex items-center justify-between w-full text-[9px] md:text-[10px] opacity-60">
-                <span className="bg-slate-700 px-1.5 py-0.5 rounded uppercase text-[8px]">{move.type}</span>
+                <span className={`px-1.5 py-0.5 rounded uppercase text-[8px] font-bold text-white border ${getTypeColor(move.type)}`}>{move.type}</span>
                 <span className="font-mono">{move.currentPp ?? move.pp}/{move.pp} PP</span>
               </div>
             </button>

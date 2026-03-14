@@ -227,9 +227,19 @@ export default function App() {
 
         // Boss buffs must live on the instance created here (not recalculated on switches).
         const scalingFactor = Math.floor((roomNumber - 1) / 10);
-        const cappedScaling = Math.min(scalingFactor, 4); // cap a stanza 50
-        const bossHpMultiplier = isBossRoom ? (1.5 + cappedScaling * 0.1) : 1;
-        const bossStatMultiplier = isBossRoom ? (1.15 + cappedScaling * 0.03) : 1;
+        const bossHpMultiplier = isBossRoom ? (
+          roomNumber >= 90 ? 1.60 :
+          roomNumber >= 70 ? 1.56 :
+          roomNumber >= 50 ? 1.54 :
+          1.3 + Math.floor((roomNumber - 1) / 10) * 0.08
+        ) : 1;
+
+        const bossStatMultiplier = isBossRoom ? (
+          roomNumber >= 90 ? 1.28 :
+          roomNumber >= 70 ? 1.24 :
+          roomNumber >= 50 ? 1.20 :
+          1.08 + Math.floor((roomNumber - 1) / 10) * 0.04
+        ) : 1;
 
         const actualStats = isBossRoom ? {
           ...baseActualStats,
@@ -306,8 +316,8 @@ export default function App() {
       activePkmn = updateStats(activePkmn, newLevel);
       updatedParty[0] = activePkmn; // Assign the updated Pokémon back
 
-      // Stanza 71+: level-up silenzioso a tutta la panchina
-      if (roomNumber >= 71) {
+      // Stanza 51+: level-up silenzioso a tutta la panchina
+      if (roomNumber >= 51) {
         for (let i = 1; i < updatedParty.length; i++) {
           updatedParty[i] = updateStats(updatedParty[i], Math.min(100, updatedParty[i].level + 1));
         }

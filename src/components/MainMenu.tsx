@@ -57,7 +57,7 @@ export default function MainMenu({ onStart, onLoadGame, hasSave }: MainMenuProps
           className="text-center mb-12"
         >
           <h1 className="text-6xl md:text-7xl font-black italic text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-600 bg-clip-text mb-2 uppercase tracking-tighter">
-            Pokémon Rouge
+            Pokémon Rogue
           </h1>
           <div className="h-1 w-32 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto mt-4 rounded-full" />
         </motion.div>
