@@ -82,7 +82,7 @@ export interface BattleLog {
   type: 'info' | 'damage' | 'status' | 'victory' | 'defeat';
 }
 
-export type GameState = 'MAIN_MENU' | 'DRAFT' | 'HUB' | 'NAVIGATION' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER' | 'PROFILE' | 'OPTIONS';
+export type GameState = 'MAIN_MENU' | 'DRAFT' | 'HUB' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER' | 'PROFILE' | 'OPTIONS';
 
 export interface Item {
   id: string;

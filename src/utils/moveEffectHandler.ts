@@ -114,6 +114,15 @@ export class MoveEffectHandler {
     move: Move
   ): MoveEffectResult {
     const dmgResult = calculateDamage(attacker, defender, move);
+    if (dmgResult.effectiveness === 0) {
+      return {
+        ...dmgResult,
+        messages: [
+          `${attacker.name} usa ${move.name}!`,
+          `${defender.name} non subisce danni... Non ha effetto!`
+        ]
+      };
+    }
     const healing = Math.floor((dmgResult.damage || 0) / 2);
     return {
       ...dmgResult,

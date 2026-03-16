@@ -3,7 +3,6 @@ import { Pokemon, BattlePokemon, GameState, SaveData, GameStats, Settings } from
 import MainMenu from './components/MainMenu';
 import DraftScreen from './components/DraftScreen';
 import TeamHub from './components/TeamHub';
-import RoomNavigation from './components/RoomNavigation';
 import BattleEngine from './components/BattleEngine';
 import ShopScreen from './components/ShopScreen';
 import { RotateCcw, Download, Loader2, ShoppingBag, Volume2, VolumeX } from 'lucide-react';
@@ -514,27 +513,6 @@ export default function App() {
           onOpenShop={() => setGameState('SHOP')}
           onOpenMenu={() => setGameState('MAIN_MENU')}
         />
-      )}
-
-      {gameState === 'NAVIGATION' && (
-        <div className="h-full flex flex-col">
-          <div className="absolute top-6 right-6 z-50 flex gap-4">
-            <div className="flex items-center gap-2 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl shadow-lg">
-              <ShoppingBag className="text-indigo-400" size={18} />
-              <span className="font-bold text-white font-mono">{money} $</span>
-            </div>
-            <button
-              onClick={() => setGameState('SHOP')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg transition-all active:scale-95"
-            >
-              Negozio
-            </button>
-          </div>
-          <RoomNavigation 
-            roomNumber={roomNumber} 
-            onEnterBattle={startBattle} 
-          />
-        </div>
       )}
 
       {gameState === 'SHOP' && (
