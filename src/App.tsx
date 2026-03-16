@@ -5,6 +5,7 @@ import DraftScreen from './components/DraftScreen';
 import TeamHub from './components/TeamHub';
 import BattleEngine from './components/BattleEngine';
 import ShopScreen from './components/ShopScreen';
+import GameOverScreen from './components/GameOverScreen';
 import { RotateCcw, Download, Loader2, ShoppingBag, Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'motion/react';
 import { fetchPokemonData, fetchNewMove } from './api';
@@ -626,32 +627,13 @@ export default function App() {
       )}
 
       {gameState === 'GAME_OVER' && (
-        <div className="h-full bg-slate-950 text-white flex flex-col items-center justify-center p-6">
-          <motion.div 
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-center"
-          >
-            {roomNumber > 100 ? (
-              <>
-                <h1 className="text-6xl font-black text-emerald-500 mb-4 italic uppercase">VITTORIA!</h1>
-                <p className="text-slate-400 mb-8">Hai completato la scalata delle 100 stanze! Sei il Campione!</p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-6xl font-black text-rose-500 mb-4">GAME OVER</h1>
-                <p className="text-slate-400 mb-8">Sei arrivato alla stanza {roomNumber}</p>
-              </>
-            )}
-            <button 
-              onClick={restartGame}
-              className="flex items-center gap-2 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-colors mx-auto"
-            >
-              <RotateCcw size={20} />
-              {roomNumber > 100 ? 'Nuova Scalata' : 'Riprova'}
-            </button>
-          </motion.div>
-        </div>
+        <GameOverScreen
+          won={roomNumber > 100}
+          roomNumber={roomNumber}
+          party={party}
+          runStats={gameStats}
+          onRestart={restartGame}
+        />
       )}
     </div>
   );
