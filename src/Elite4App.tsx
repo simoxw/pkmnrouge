@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { BattlePokemon, InventoryItem } from './types';
 import { ELITE4_REGIONS } from './constants/elite4Data';
+import { ITEMS } from './constants';
 import { Elite4Trainer } from './types';
 import { fetchPokemonData, fetchNewMove } from './api';
 import { getActualStats, updateStats } from './utils/battleMechanics';
@@ -70,7 +71,7 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
   };
 
   useEffect(() => {
-    if (gamePhase !== 'DRAFT' && !showResumePrompt) {
+    if (gamePhase !== 'DRAFT' && gamePhase !== 'GAME_OVER' && gamePhase !== 'LEARN_MOVE' && !showResumePrompt) {
       saveGame();
     }
   }, [regionIndex, trainerIndex, party, money, inventory, gamePhase, showResumePrompt]);
@@ -85,6 +86,8 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
       currentHp: actualStats.hp,
       maxHp: actualStats.hp,
       status: null,
+      statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 },
+      moves: pokemon.moves.map((m: any) => ({ ...m, currentPp: m.pp }))
     };
     const newParty = [...party, battlePokemon];
     setParty(newParty);
@@ -172,7 +175,7 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
           currentHp: newHp,
           moves: pokemon.moves.map(move => ({
             ...move,
-            currentPp: Math.min((move.currentPp || 0) + 3, move.pp)
+            currentPp: Math.min((move.currentPp ?? move.pp) + 5, move.pp)
           })),
           statStages: {
             hp: 0,
@@ -195,10 +198,15 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
       setRegionIndex(r => r + 1);
       setTrainerIndex(0);
       // Level up party by 8 levels
-      setParty(prevParty =>
-        prevParty.map(p => updateStats(p, p.level + 8))
-      );
-      applyRest();
+      setParty(prev => prev.map(p => {
+        const leveled = updateStats(p, p.level + 8);
+        return {
+          ...leveled,
+          currentHp: Math.min(leveled.currentHp + Math.floor(leveled.maxHp * 0.3), leveled.maxHp),
+          moves: leveled.moves.map(m => ({ ...m, currentPp: Math.min((m.currentPp ?? m.pp) + 5, m.pp) })),
+          statStages: { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+        };
+      }));
       setGamePhase('HUB');
     } else {
       setWon(true);
@@ -218,7 +226,7 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
     setParty(newParty);
   };
 
-  const handleUseItem = (itemId: string, pokemonIndex: number) => {
+  const handleUseItem = (itemId: string, pokemonIndex: number): string => {
     if (itemId === 'mt-random') {
       const targetPkmn = party[pokemonIndex];
       setLoading(true);
@@ -235,8 +243,21 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
       }).catch(() => setLoading(false));
       return 'Uso MT Casuale...';
     }
-    // Altre logiche item come in App.tsx
-    return '';
+    const item = ITEMS.find(i => i.id === itemId);
+    if (!item) return 'Strumento non trovato.';
+    const targetPkmn = party[pokemonIndex];
+    const { updatedPokemon, message } = item.effect(targetPkmn);
+    if (updatedPokemon === targetPkmn) return message;
+    setParty(prev => {
+      const next = [...prev];
+      next[pokemonIndex] = updatedPokemon;
+      return next;
+    });
+    setInventory(prev =>
+      prev.map(i => i.itemId === itemId ? { ...i, count: i.count - 1 } : i)
+        .filter(i => i.count > 0)
+    );
+    return message;
   };
 
   const handleBuyItem = (item: any) => {
@@ -254,17 +275,19 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
   const handleLearnMove = (replaceIndex: number) => {
     if (!pendingMove) return;
     const { pokemonIndex, newMove } = pendingMove;
-    const newParty = [...party];
-    const pokemon = newParty[pokemonIndex];
-    if (replaceIndex === -1) {
-      // Aggiungi alla fine se c'è spazio
-      if (pokemon.moves.length < 4) {
-        pokemon.moves.push(newMove);
+    setParty(prev => {
+      const next = [...prev];
+      const pkmn = { ...next[pokemonIndex] };
+      const moves = [...pkmn.moves];
+      if (replaceIndex === -1) {
+        if (moves.length < 4) moves.push({ ...newMove, currentPp: newMove.pp });
+      } else {
+        moves[replaceIndex] = { ...newMove, currentPp: newMove.pp };
       }
-    } else {
-      pokemon.moves[replaceIndex] = newMove;
-    }
-    setParty(newParty);
+      pkmn.moves = moves;
+      next[pokemonIndex] = pkmn;
+      return next;
+    });
     setPendingMove(null);
     setGamePhase('HUB');
   };
@@ -430,6 +453,18 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
                       </span>
                     ))}
                   </div>
+                </div>
+                <div className="flex flex-col gap-1 ml-2 flex-shrink-0">
+                  <button
+                    onClick={() => i > 0 && handleSwapPartyOrder(i, i - 1)}
+                    disabled={i === 0}
+                    className="p-1 rounded bg-amber-800/50 hover:bg-amber-700/50 disabled:opacity-20 transition-colors"
+                  >▲</button>
+                  <button
+                    onClick={() => i < party.length - 1 && handleSwapPartyOrder(i, i + 1)}
+                    disabled={i === party.length - 1}
+                    className="p-1 rounded bg-amber-800/50 hover:bg-amber-700/50 disabled:opacity-20 transition-colors"
+                  >▼</button>
                 </div>
               </div>
             ))}
