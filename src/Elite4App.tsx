@@ -159,11 +159,13 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
         setGamePhase('GAME_OVER');
       } else {
         applyRest();
-        setMoney(m => m + (trainerIndex === 4 ? 200 : 100));
+        const baseReward = 160 + regionIndex * 80;
+        const reward = trainerIndex === 4 ? Math.round(baseReward * 2.5) : baseReward;
+        setMoney(m => m + reward);
         setGamePhase('OUTRO');
       }
     }, 0);
-  }, [trainerIndex]);
+  }, [trainerIndex, regionIndex]);
 
   const applyRest = () => {
     setParty(prevParty =>

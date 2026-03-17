@@ -12,7 +12,7 @@ interface Elite4ShopScreenProps {
 
 export default function Elite4ShopScreen({ money, onBuy, onExit }: Elite4ShopScreenProps) {
   const shopItems = useMemo(() => {
-    const itemIds = ['super_potion', 'hyper_potion', 'full_heal', 'full_restore', 'revive', 'max_elixir', 'mt-random'];
+    const itemIds = ['potion', 'super_potion', 'hyper_potion', 'full_heal', 'full_restore', 'revive', 'ether', 'elixir', 'max_elixir', 'mt-random'];
     return itemIds
       .map(id => ITEMS.find(item => item.id === id))
       .filter((item): item is Item => item !== undefined);
