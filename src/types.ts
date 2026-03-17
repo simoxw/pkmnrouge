@@ -82,7 +82,7 @@ export interface BattleLog {
   type: 'info' | 'damage' | 'status' | 'victory' | 'defeat';
 }
 
-export type GameState = 'MAIN_MENU' | 'DRAFT' | 'HUB' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER' | 'PROFILE' | 'OPTIONS';
+export type GameState = 'MAIN_MENU' | 'DRAFT' | 'HUB' | 'BATTLE' | 'RECRUITMENT' | 'LEARN_MOVE' | 'SHOP' | 'GAME_OVER' | 'ELITE4' | 'PROFILE' | 'OPTIONS';
 
 export interface Item {
   id: string;
@@ -116,5 +116,19 @@ export interface GameStats {
 export interface Settings {
   soundEnabled: boolean;
   musicEnabled: boolean;
+}
+
+export interface Elite4Trainer {
+  name: string;
+  isChampion: boolean;
+  spriteUrl: string;
+  intro: string;
+  outro: string;
+  pokemonIds: number[];
+}
+export interface Elite4Region {
+  region: string;
+  baseLevel: number;
+  trainers: Elite4Trainer[];
 }
 

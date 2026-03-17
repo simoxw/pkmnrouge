@@ -7,9 +7,10 @@ interface MainMenuProps {
   onStart: () => void;
   onLoadGame: () => void;
   hasSave: boolean;
+  onStartElite4?: () => void;
 }
 
-export default function MainMenu({ onStart, onLoadGame, hasSave }: MainMenuProps) {
+export default function MainMenu({ onStart, onLoadGame, hasSave, onStartElite4 }: MainMenuProps) {
   const [showProfile, setShowProfile] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [gameStats, setGameStats] = useState<GameStats | null>(null);
@@ -214,11 +215,10 @@ export default function MainMenu({ onStart, onLoadGame, hasSave }: MainMenuProps
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.7 }}
-            disabled
-            className="w-full bg-slate-700 text-slate-400 font-black py-4 px-6 rounded-2xl text-lg uppercase tracking-wider cursor-not-allowed opacity-50"
+            onClick={onStartElite4}
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-black py-4 px-6 rounded-2xl text-lg uppercase tracking-wider transition-all active:scale-95 shadow-lg"
           >
-            Modalità Online
-            <div className="inline-block ml-2 text-xs font-bold">Prossimamente</div>
+            ⚔️ Elite 4
           </motion.button>
 
           <motion.button

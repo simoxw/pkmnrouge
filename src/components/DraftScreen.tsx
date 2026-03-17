@@ -11,6 +11,7 @@ interface DraftScreenProps {
   onSelect: (pokemon: Pokemon) => void;
   title?: string;
   subtitle?: string;
+  key?: any;
 }
 
 // Colore badge per damage class

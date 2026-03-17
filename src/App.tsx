@@ -14,6 +14,7 @@ import { getActualStats, updateStats } from './utils/battleMechanics';
 import { Item, InventoryItem } from './types';
 import { useGameSave } from './hooks/useGameSave';
 import { useSoundEffects } from './hooks/useSoundEffects';
+import Elite4App from './Elite4App';
 
 
 
@@ -432,6 +433,24 @@ export default function App() {
   };
 
   const handleUseItem = (itemId: string, pokemonIndex: number): string => {
+    if (itemId === 'mt-random') {
+      const targetPkmn = party[pokemonIndex];
+      setLoading(true);
+      fetchNewMove(targetPkmn.id, targetPkmn.moves.map(m => m.id)).then(newMove => {
+        if (newMove) {
+          setPendingMove({ pokemonIndex, newMove });
+          setPendingNextRoom(null);
+          setGameState('LEARN_MOVE');
+          setInventory(prev =>
+            prev.map(i => i.itemId === 'mt-random' ? { ...i, count: i.count - 1 } : i)
+               .filter(i => i.count > 0)
+          );
+        }
+        setLoading(false);
+      }).catch(() => setLoading(false));
+      return 'Uso MT Casuale...';
+    }
+
     const item = ITEMS.find(i => i.id === itemId);
     if (!item) return "Strumento non trovato.";
 
@@ -493,6 +512,7 @@ export default function App() {
           onStart={handleStartGame}
           onLoadGame={handleLoadGame}
           hasSave={hasSave}
+          onStartElite4={() => { playSound('click'); setGameState('ELITE4'); }}
         />
       )}
 
@@ -633,6 +653,13 @@ export default function App() {
           party={party}
           runStats={gameStats}
           onRestart={restartGame}
+        />
+      )}
+
+      {gameState === 'ELITE4' && (
+        <Elite4App
+          onExit={() => setGameState('MAIN_MENU')}
+          soundEnabled={settings.soundEnabled}
         />
       )}
     </div>

@@ -269,6 +269,14 @@ export const ITEMS: Item[] = [
       updatedPokemon: { ...pkmn, currentHp: pkmn.maxHp, status: null, sleepTurns: undefined },
       message: `${pkmn.name} è completamente ripristinato!`
     })
+  },
+  {
+    id: 'mt-random',
+    name: 'MT Casuale',
+    description: 'Insegna una mossa casuale compatibile al Pokémon scelto.',
+    price: 175,
+    minRoom: 1,
+    effect: (pokemon) => ({ updatedPokemon: pokemon, message: '__USE_MT__' })
   }
 ];
 
