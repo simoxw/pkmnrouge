@@ -36,6 +36,9 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
   const [pendingMove, setPendingMove] = useState<{ pokemonIndex: number, newMove: any } | null>(null);
   const [isBossActive, setIsBossActive] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [showBag, setShowBag] = useState(false);
+  const [bagFeedback, setBagFeedback] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
   // Salvataggio locale
   const SAVE_KEY = 'pkmrouge_elite4_save';
@@ -159,8 +162,8 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
         setGamePhase('GAME_OVER');
       } else {
         applyRest();
-        const baseReward = 160 + regionIndex * 80;
-        const reward = trainerIndex === 4 ? Math.round(baseReward * 2.5) : baseReward;
+        const baseReward = 300 + regionIndex * 80;
+        const reward = trainerIndex === 4 ? baseReward * 2 : baseReward;
         setMoney(m => m + reward);
         setGamePhase('OUTRO');
       }
@@ -360,11 +363,25 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
               <h1 className="text-2xl font-black uppercase italic tracking-tighter text-amber-400">
                 ⚔️ ELITE 4
               </h1>
-              <div className="text-right">
-                <div className="text-sm text-amber-300 font-bold">{ELITE4_REGIONS[regionIndex].region}</div>
-                <div className="text-xs text-amber-200">
-                  vs {ELITE4_REGIONS[regionIndex].trainers[trainerIndex].name}
-                  {trainerIndex === 4 && ' — CAMPIONE'}
+              <div className="flex items-center gap-3">
+                <div className="text-amber-300 font-mono font-bold text-sm">💰 {money}$</div>
+                <button
+                  onClick={() => setShowBag(true)}
+                  className="relative bg-slate-700/80 hover:bg-slate-600 text-white font-bold px-3 py-2 rounded-xl transition-all text-sm"
+                >
+                  🎒
+                  {inventory.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+                      {inventory.reduce((sum, i) => sum + i.count, 0)}
+                    </span>
+                  )}
+                </button>
+                <div className="text-right">
+                  <div className="text-sm text-amber-300 font-bold">{ELITE4_REGIONS[regionIndex].region}</div>
+                  <div className="text-xs text-amber-200">
+                    vs {ELITE4_REGIONS[regionIndex].trainers[trainerIndex].name}
+                    {trainerIndex === 4 && ' — CAMPIONE'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -496,6 +513,77 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
               </button>
             </div>
           </div>
+          {showBag && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-end justify-center">
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="w-full max-w-lg bg-slate-900 border-t border-amber-500/30 rounded-t-3xl p-4 max-h-[80dvh] flex flex-col"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-black text-amber-400 uppercase tracking-wider">🎒 Zaino</h3>
+                  <button
+                    onClick={() => { setShowBag(false); setSelectedItem(null); setBagFeedback(null); }}
+                    className="text-slate-400 hover:text-white text-xl"
+                  >✕</button>
+                </div>
+                {bagFeedback && (
+                  <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-bold px-3 py-2 rounded-xl mb-3">
+                    {bagFeedback}
+                  </div>
+                )}
+                {inventory.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">Zaino vuoto</p>
+                ) : (
+                  <div className="overflow-y-auto flex-1 space-y-2">
+                    {inventory.map(inv => {
+                      const item = ITEMS.find(i => i.id === inv.itemId);
+                      if (!item) return null;
+                      return (
+                        <div key={inv.itemId} className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <span className="font-bold text-white">{item.name}</span>
+                              <span className="text-amber-400 text-xs ml-2">×{inv.count}</span>
+                            </div>
+                            <span className="text-xs text-slate-400">{item.description}</span>
+                          </div>
+                          {selectedItem === inv.itemId ? (
+                            <div className="flex flex-col gap-1">
+                              <p className="text-xs text-amber-300 mb-1">Su quale Pokémon?</p>
+                              {party.map((pkmn, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    const msg = handleUseItem(inv.itemId, idx);
+                                    setBagFeedback(msg);
+                                    setSelectedItem(null);
+                                    setTimeout(() => setBagFeedback(null), 2500);
+                                  }}
+                                  className="text-left text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg flex items-center justify-between"
+                                >
+                                  <span>{pkmn.name}</span>
+                                  <span className="text-slate-400">{pkmn.currentHp}/{pkmn.maxHp} HP</span>
+                                </button>
+                              ))}
+                              <button onClick={() => setSelectedItem(null)} className="text-xs text-slate-500 hover:text-white mt-1">Annulla</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setSelectedItem(inv.itemId)}
+                              className="w-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-2 rounded-lg transition-all"
+                            >
+                              Usa
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          )}
         </div>
       )}
 
