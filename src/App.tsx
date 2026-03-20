@@ -353,6 +353,7 @@ export default function App() {
       }
 
       if (nextRoom > 100) {
+        setRoomNumber(nextRoom);
         setGameState('GAME_OVER'); // We'll use GAME_OVER state but with a victory message
         return;
       }

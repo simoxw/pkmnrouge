@@ -51,13 +51,138 @@ export default function GameOverScreen({ won, roomNumber, party, runStats, onRes
   const rank = getRunRank(roomNumber, won);
   const mostUsedType = getMostUsedType(party);
   const mvp = getHighestLevelPokemon(party);
-  const bossesDefeated = Math.floor(roomNumber / 10);
+  const bossesDefeated = won ? 10 : Math.floor(roomNumber / 10);
 
   useEffect(() => {
     // Mostra i dettagli con un leggero ritardo per l'effetto drammatico
     const timer = setTimeout(() => setShowDetails(true), 800);
     return () => clearTimeout(timer);
   }, []);
+
+  if (won) {
+    return (
+      <div className="relative h-[100dvh] w-full bg-gradient-to-b from-amber-900 via-amber-950 to-slate-950 text-white overflow-y-auto flex flex-col items-center justify-start pt-8 pb-12 px-4">
+        {/* Sfondo animato con 40 particelle e stelle */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: '110%', x: `${Math.random() * 100}%` }}
+              animate={{ opacity: [0, 1, 0], y: '-10%' }}
+              transition={{ duration: 3 + Math.random() * 2, delay: Math.random() * 2, repeat: Infinity, repeatDelay: Math.random() * 3 }}
+              className="absolute text-amber-400/40"
+              style={{ left: `${Math.random() * 100}%` }}
+            >
+              {i % 2 === 0 ? <div className="w-1.5 h-1.5 rounded-full bg-amber-400" /> : <span className="text-lg">★</span>}
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="relative z-10 w-full max-w-2xl mx-auto flex flex-col items-center gap-8">
+          {/* Titolo Trionfale */}
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 100, damping: 10 }}
+            className="flex flex-col items-center text-center"
+          >
+            <Trophy size={100} className="text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)] mb-6" />
+            <motion.h1
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-5xl sm:text-7xl font-black uppercase tracking-tighter text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
+            >
+              POKÉMON MASTER!
+            </motion.h1>
+            <p className="text-xl sm:text-2xl font-bold text-amber-200 mt-2">
+              Hai conquistato tutte le 100 stanze!
+            </p>
+            
+            {/* Hall of Fame Badge */}
+            <motion.div 
+              animate={{ borderColor: ['rgba(251,191,36,0.3)', 'rgba(251,191,36,0.8)', 'rgba(251,191,36,0.3)'] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="mt-6 px-8 py-2 border-2 rounded-full bg-amber-500/10 backdrop-blur-sm"
+            >
+              <span className="text-lg font-black tracking-[0.2em] text-amber-400">HALL OF FAME</span>
+            </motion.div>
+          </motion.div>
+
+          {/* Party Completo Hall of Fame */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="w-full bg-white/5 border border-amber-500/30 rounded-3xl p-6 backdrop-blur-md"
+          >
+            <div className="text-xs uppercase font-black text-amber-400/60 tracking-widest mb-6 text-center">I Leggendari Campioni</div>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              {party.map((p, i) => (
+                <motion.div 
+                  key={p.id + i}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8 + i * 0.1, type: 'spring' }}
+                  className="flex flex-col items-center"
+                >
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-amber-400/20 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500" />
+                    <PokemonSprite
+                      id={p.id}
+                      name={p.name}
+                      className="w-20 h-20 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] relative z-10"
+                    />
+                  </div>
+                  <div className="mt-2 font-black text-xs uppercase text-amber-200">{p.name}</div>
+                  <div className="text-[10px] font-mono text-amber-400/60 font-bold">LV. {p.level}</div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Statistiche Finali */}
+          <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-4 px-2">
+            {[
+              { label: 'Stanze', value: '100 / 100', icon: Swords, color: 'text-indigo-400' },
+              { label: 'Boss', value: '10 / 10', icon: Shield, color: 'text-amber-400' },
+              { label: 'Max Level', value: Math.max(...party.map(p => p.level)), icon: Star, color: 'text-emerald-400' },
+              { label: 'Team', value: party.length, icon: Heart, color: 'text-rose-400' }
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.2 + i * 0.1 }}
+                className="bg-slate-900/80 border border-white/10 rounded-2xl p-4 flex flex-col items-center text-center"
+              >
+                <stat.icon size={20} className={`${stat.color} mb-2`} />
+                <div className="text-[10px] uppercase font-black opacity-40 mb-1">{stat.label}</div>
+                <div className="text-xl font-black text-white leading-none">{stat.value}</div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Bottoni Golden */}
+          <div className="flex flex-col sm:flex-row gap-4 w-full px-4 mt-4">
+            <button
+              onClick={onRestart}
+              className="flex-1 bg-amber-500 hover:bg-amber-400 text-amber-950 font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] active:scale-95"
+            >
+              <RotateCcw size={20} />
+              NUOVA AVVENTURA
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 backdrop-blur-sm active:scale-95"
+            >
+              <Home size={20} />
+              MENU PRINCIPALE
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-[100dvh] w-full bg-slate-950 text-white overflow-y-auto flex flex-col items-center justify-start pt-8 pb-12 px-4">

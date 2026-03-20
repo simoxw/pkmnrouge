@@ -12,7 +12,7 @@ import TeamHub from './components/TeamHub';
 import Elite4ShopScreen from './components/Elite4ShopScreen';
 import BattleEngine from './components/BattleEngine';
 import TrainerIntroScreen from './components/TrainerIntroScreen';
-import GameOverScreen from './components/GameOverScreen';
+import Elite4GameOverScreen from './components/Elite4GameOverScreen';
 
 interface Elite4AppProps {
   onExit: () => void;
@@ -709,12 +709,22 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
 
       {/* GAME_OVER */}
       {gamePhase === 'GAME_OVER' && (
-        <GameOverScreen
+        <Elite4GameOverScreen
           won={won}
-          roomNumber={trainerIndex + 1 + regionIndex * 5}
+          regionIndex={regionIndex}
+          trainerIndex={trainerIndex}
           party={party}
-          runStats={{ maxRoomReached: trainerIndex + 1 + regionIndex * 5, maxLevelAchieved: party[0]?.level || 50, mostUsedPokemonId: party[0]?.name || '' }}
-          onRestart={onExit}
+          onRestart={() => {
+            localStorage.removeItem('pkmrouge_elite4_save');
+            setRegionIndex(0);
+            setTrainerIndex(0);
+            setParty([]);
+            setMoney(150);
+            setInventory([]);
+            setDraftRound(1);
+            setGamePhase('DRAFT');
+          }}
+          onExit={onExit}
         />
       )}
     </div>
