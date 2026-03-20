@@ -303,6 +303,29 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
     setParty(newParty);
   };
 
+  const isItemUsable = (itemId: string, member: BattlePokemon): boolean => {
+    const allPpFull = member.moves.every(m => (m.currentPp ?? m.pp) >= m.pp);
+    switch (itemId) {
+      case 'potion':
+      case 'super_potion':
+      case 'hyper_potion':
+        return member.currentHp > 0 && member.currentHp < member.maxHp;
+      case 'antidote':      return member.status === 'PSN';
+      case 'paralyze_heal': return member.status === 'PAR';
+      case 'awakening':     return member.status === 'SLP';
+      case 'burn_heal':     return member.status === 'BRN';
+      case 'ice_heal':      return member.status === 'FRZ';
+      case 'full_heal':     return member.status !== null;
+      case 'ether':
+      case 'max_ether':
+      case 'elixir':
+      case 'max_elixir':    return !allPpFull;
+      case 'revive':        return member.currentHp <= 0;
+      case 'full_restore':  return member.currentHp < member.maxHp || member.status !== null;
+      default:              return true;
+    }
+  };
+
   if (showResumePrompt) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -551,30 +574,44 @@ export default function Elite4App({ onExit, soundEnabled }: Elite4AppProps) {
                           {selectedItem === inv.itemId ? (
                             <div className="flex flex-col gap-1">
                               <p className="text-xs text-amber-300 mb-1">Su quale Pokémon?</p>
-                              {party.map((pkmn, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => {
-                                    const msg = handleUseItem(inv.itemId, idx);
-                                    setBagFeedback(msg);
-                                    setSelectedItem(null);
-                                    setTimeout(() => setBagFeedback(null), 2500);
-                                  }}
-                                  className="text-left text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg flex items-center justify-between"
-                                >
-                                  <span>{pkmn.name}</span>
-                                  <span className="text-slate-400">{pkmn.currentHp}/{pkmn.maxHp} HP</span>
-                                </button>
-                              ))}
+                              {party.map((pkmn, idx) => {
+                                const usable = isItemUsable(inv.itemId, pkmn);
+                                return (
+                                  <button
+                                    key={idx}
+                                    onClick={() => {
+                                      if (!usable) return;
+                                      const msg = handleUseItem(inv.itemId, idx);
+                                      setBagFeedback(msg);
+                                      setSelectedItem(null);
+                                      setTimeout(() => setBagFeedback(null), 2500);
+                                    }}
+                                    disabled={!usable}
+                                    className={`text-left text-xs px-3 py-2 rounded-lg flex items-center justify-between transition-all ${
+                                      usable 
+                                        ? 'bg-slate-800 hover:bg-slate-700 text-white' 
+                                        : 'bg-slate-900 text-slate-500 opacity-40 cursor-not-allowed'
+                                    }`}
+                                  >
+                                    <span>{pkmn.name}</span>
+                                    <span className="text-slate-400">{pkmn.currentHp}/{pkmn.maxHp} HP</span>
+                                  </button>
+                                );
+                              })}
                               <button onClick={() => setSelectedItem(null)} className="text-xs text-slate-500 hover:text-white mt-1">Annulla</button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => setSelectedItem(inv.itemId)}
-                              className="w-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-2 rounded-lg transition-all"
-                            >
-                              Usa
-                            </button>
+                            <div className="flex flex-col gap-2">
+                              {!party.some(p => isItemUsable(inv.itemId, p)) && (
+                                <p className="text-[10px] text-rose-400 text-center font-bold">Nessun target disponibile</p>
+                              )}
+                              <button
+                                onClick={() => setSelectedItem(inv.itemId)}
+                                className="w-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-2 rounded-lg transition-all"
+                              >
+                                Usa
+                              </button>
+                            </div>
                           )}
                         </div>
                       );
