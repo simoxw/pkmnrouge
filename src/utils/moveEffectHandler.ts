@@ -179,11 +179,12 @@ export class MoveEffectHandler {
 
     if (move.statChanges) {
       move.statChanges.forEach(sc => {
-        // I debuff vanno sull'avversario (opponent)
-        statChanges.push({ ...sc, target: 'opponent', change: -Math.abs(sc.change) });
+        const target = sc.target ?? 'opponent';
+        const targetName = target === 'user' ? attacker.name : defender.name;
+        statChanges.push({ ...sc, target: target, change: -Math.abs(sc.change) });
         const statName = this.getStatDisplayName(sc.stat);
         const changeStages = Math.abs(sc.change);
-        messages.push(`${statName} di ${defender.name} è diminuito di ${changeStages} ${changeStages === 1 ? 'stadio' : 'stadi'}!`);
+        messages.push(`${statName} di ${targetName} è diminuito di ${changeStages} ${changeStages === 1 ? 'stadio' : 'stadi'}!`);
       });
     }
 

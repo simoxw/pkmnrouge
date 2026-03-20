@@ -341,18 +341,17 @@ export const TYPE_CHART: Record<Type, Partial<Record<Type, number>>> = {
     [Type.ROCK]: 2,
     [Type.DARK]: 2,
     [Type.STEEL]: 2,
-    [Type.POISON]: 0.5,
     [Type.FLYING]: 0.5,
     [Type.PSYCHIC]: 0.5,
-    [Type.BUG]: 0.5,
-    [Type.GHOST]: 0
+    [Type.GHOST]: 0,
+    [Type.FAIRY]: 0.5
   },
   [Type.POISON]: {
     [Type.GRASS]: 2,
     [Type.POISON]: 0.5,
     [Type.GROUND]: 0.5,
     [Type.ROCK]: 0.5,
-    [Type.GHOST]: 0.5,
+    [Type.GHOST]: 0,
     [Type.STEEL]: 0,
     [Type.FAIRY]: 2
   },
@@ -432,9 +431,8 @@ export const TYPE_CHART: Record<Type, Partial<Record<Type, number>>> = {
     [Type.FIGHTING]: 2,
     [Type.DRAGON]:   2,
     [Type.DARK]:     2,
-    [Type.FIRE]:     0.5,
     [Type.POISON]:   0.5,
-    [Type.STEEL]:    0.5,
+    [Type.STEEL]:    0.5
   }
 };
 

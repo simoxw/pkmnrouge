@@ -26,6 +26,12 @@ interface BattleEngineProps {
 }
 
 export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, party, inventory, isBoss, soundEnabled, onBattleEnd, onSwitch, onUpdatePartyMember, onUseItem }: BattleEngineProps) {
+  // Calcola la speed effettiva considerando paralisi (-50% speed)
+  const getEffectiveSpeed = (pokemon: BattlePokemon): number => {
+    const baseSpeed = getStatWithStage(pokemon.actualStats.speed, pokemon.statStages?.speed ?? 0);
+    return pokemon.status === 'PAR' ? baseSpeed * 0.5 : baseSpeed;
+  };
+
   const [player, setPlayer] = useState<BattlePokemon>({
     ...initialPlayer,
     status: initialPlayer.status || null,
@@ -39,8 +45,8 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
   });
   const [logs, setLogs] = useState<BattleLog[]>([]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(() => {
-    const playerSpeed = getStatWithStage(initialPlayer.actualStats.speed, initialPlayer.statStages?.speed ?? 0);
-    const enemySpeed = getStatWithStage(enemyTeam[0].actualStats.speed, enemyTeam[0].statStages?.speed ?? 0);
+    const playerSpeed = getEffectiveSpeed(initialPlayer);
+    const enemySpeed = getEffectiveSpeed(enemyTeam[0]);
     return playerSpeed >= enemySpeed;
   });
   const [isBattleOver, setIsBattleOver] = useState(false);

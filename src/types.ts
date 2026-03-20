@@ -32,7 +32,7 @@ export interface Move {
   damageClass: DamageClass;
   ailment?: string;
   ailmentChance?: number;
-  statChanges?: { stat: keyof Stats; change: number }[];
+  statChanges?: { stat: keyof Stats; change: number; target?: 'user' | 'opponent' }[];
   target?: string;
   priority?: number;
 }

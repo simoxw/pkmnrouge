@@ -11,10 +11,28 @@ const formatMove = (moveData: any): Move => {
     'speed': 'speed'
   };
 
-  const statChanges = moveData.stat_changes?.map((sc: any) => ({
-    stat: statMapping[sc.stat.name] || 'attack',
-    change: sc.change
-  }));
+  const statChanges = moveData.stat_changes?.map((sc: any) => {
+    let target: 'user' | 'opponent' = 'opponent';
+    
+    // Se è una mossa su se stessi
+    if (moveData.target?.name === 'user') {
+      target = 'user';
+    }
+    // Se il cambio è positivo (buff), è sempre su se stessi
+    else if (sc.change > 0) {
+      target = 'user';
+    }
+    // Altrimenti (debuff su avversario), è opponent
+    else {
+      target = 'opponent';
+    }
+    
+    return {
+      stat: statMapping[sc.stat.name] || 'attack',
+      change: sc.change,
+      target
+    };
+  });
 
   return {
     id: moveData.name,
