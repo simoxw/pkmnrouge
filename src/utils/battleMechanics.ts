@@ -49,7 +49,7 @@ export function updateStats(pokemon: BattlePokemon, newLevel: number): BattlePok
     level: newLevel,
     actualStats: newActualStats,
     maxHp: newActualStats.hp,
-    currentHp: pokemon.currentHp + hpDiff // Mantiene la proporzione di HP
+    currentHp: Math.min(newActualStats.hp, Math.max(0, pokemon.currentHp + hpDiff))
   };
 }
 

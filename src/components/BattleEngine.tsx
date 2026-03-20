@@ -345,18 +345,46 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
     setPlayerEffectivenessMessage(null);
     setEnemyEffectivenessMessage(null);
 
-    // Improved AI: Prefer moves that are super effective against player
-    const availableMoves = enemy.moves.filter(m => m.power > 0); // Only damaging moves for simplicity
+    // Improved AI: Consider all moves (damaging + status)
+    const allMoves = enemy.moves;
     let movePool: Move[] = [];
 
-    availableMoves.forEach(move => {
-      let effectiveness = 1;
-      player.types.forEach(type => {
-        effectiveness *= getTypeEffectiveness(move.type, type);
-      });
+    allMoves.forEach(move => {
+      let weight = 1;
 
-      // Weight: super effective moves get 3x chance, normal 1x, not very effective 0.5x
-      const weight = effectiveness > 1 ? 3 : effectiveness < 1 ? 0.5 : 1;
+      if (move.power > 0) {
+        // Damaging moves: weight by type effectiveness
+        let effectiveness = 1;
+        player.types.forEach(type => {
+          effectiveness *= getTypeEffectiveness(move.type, type);
+        });
+        weight = effectiveness > 1 ? 3 : effectiveness < 1 ? 0.5 : 1;
+      } else if (move.damageClass === 'status') {
+        // Status moves: base weight 1, but exclude if inappropriate
+        weight = 1;
+
+        // Helper: check if all stat stages are at +6 or -6
+        const allStatsAtMax = (stages: typeof enemy.statStages) =>
+          Object.values(stages || {}).every(stage => stage === 6);
+        const allStatsAtMin = (stages: typeof enemy.statStages) =>
+          Object.values(stages || {}).every(stage => stage === -6);
+
+        // Exclude if conditions don't apply
+        if (move.id && move.id.includes('raise')) {
+          // Buff moves: exclude if all stats are already at +6
+          if (allStatsAtMax(enemy.statStages)) weight = 0;
+        } else if (move.id && move.id.includes('lower')) {
+          // Debuff moves: exclude if all opponent stats are at -6
+          if (allStatsAtMin(player.statStages)) weight = 0;
+        } else if (move.id && (move.id.includes('psn') || move.id.includes('par') || move.id.includes('burn') || move.id.includes('freeze') || move.id.includes('sleep'))) {
+          // Status application moves: exclude if opponent already has status
+          if (player.status !== null) weight = 0;
+        } else if (move.id && (move.id.includes('protect') || move.id.includes('recover'))) {
+          // Self-status or recovery: always weight 1
+          // (would need more specific logic per move)
+        }
+      }
+
       for (let i = 0; i < weight; i++) {
         movePool.push(move);
       }
@@ -826,37 +854,92 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
         <div className="flex-1 grid grid-cols-2 gap-2 relative z-40">
           {hoveredMove && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+              transition={{ duration: 0.15 }}
+              className="fixed top-[40%] -translate-y-1/2 left-1/2 -translate-x-1/2 pointer-events-none z-50 w-[85vw] max-w-xs"
             >
-              <div className="bg-slate-800 border border-indigo-500/30 px-4 py-3 rounded-xl shadow-2xl text-[11px] md:text-base max-w-md">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-bold text-indigo-300 uppercase text-[11px] md:text-sm">{hoveredMove.name}</span>
-                  <span className={`px-2 py-1 rounded text-[9px] md:text-[11px] uppercase font-bold border ${getTypeColor(hoveredMove.type)}`}>{hoveredMove.type}</span>
+              <div className="bg-slate-800 border border-indigo-500/30 px-3 py-2 rounded-xl shadow-2xl text-[10px] md:text-sm">
+                {/* Header: Nome + Tipo */}
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="font-bold text-indigo-300 uppercase text-[10px] md:text-xs">{hoveredMove.name}</span>
+                  <span className={`px-2 py-0.5 rounded text-[8px] md:text-[9px] uppercase font-bold border ${getTypeColor(hoveredMove.type)}`}>{hoveredMove.type}</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-[9px] md:text-[10px] font-mono">
+
+                {/* Base Stats: Potenza, Precisione, Classe */}
+                <div className="grid grid-cols-3 gap-1.5 text-[8px] md:text-[9px] font-mono mb-1.5">
                   <div className="flex flex-col">
-                    <span className="opacity-50 uppercase text-[7px]">Potenza</span>
+                    <span className="opacity-50 uppercase text-[6px]">Potenza</span>
                     <span className="font-bold text-white">{hoveredMove.power || '--'}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="opacity-50 uppercase text-[7px]">Precisione</span>
+                    <span className="opacity-50 uppercase text-[6px]">Precisione</span>
                     <span className="font-bold text-white">{hoveredMove.accuracy}%</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="opacity-50 uppercase text-[7px]">Classe</span>
-                    <span className="font-bold text-white uppercase text-[7px]">{hoveredMove.damageClass?.slice(0, 3)}</span>
+                    <span className="opacity-50 uppercase text-[6px]">Classe</span>
+                    <span className="font-bold text-white uppercase text-[6px]">{hoveredMove.damageClass?.slice(0, 3)}</span>
                   </div>
                 </div>
 
+                {/* PP Row */}
+                <div className="mb-1.5 pb-1.5 border-b border-indigo-500/20">
+                  <div className="flex justify-between items-center text-[8px]">
+                    <span className="opacity-50 uppercase text-[6px]">PP</span>
+                    <span className={`font-bold ${
+                      hoveredMove.currentPp !== undefined && hoveredMove.currentPp <= hoveredMove.pp * 0.25
+                        ? 'text-red-400'
+                        : hoveredMove.currentPp !== undefined && hoveredMove.currentPp <= hoveredMove.pp * 0.5
+                        ? 'text-yellow-400'
+                        : 'text-white'
+                    }`}>
+                      {hoveredMove.currentPp ?? hoveredMove.pp}/{hoveredMove.pp}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Ailment Badge */}
+                {hoveredMove.ailment && (
+                  <div className="mb-1.5 flex flex-wrap gap-1">
+                    <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full border ${
+                      hoveredMove.ailment === 'PAR'
+                        ? 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                        : hoveredMove.ailment === 'BRN'
+                        ? 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+                        : hoveredMove.ailment === 'PSN'
+                        ? 'text-purple-400 border-purple-500/30 bg-purple-500/10'
+                        : hoveredMove.ailment === 'SLP'
+                        ? 'text-slate-400 border-slate-500/30 bg-slate-500/10'
+                        : hoveredMove.ailment === 'FRZ'
+                        ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10'
+                        : 'text-gray-400 border-gray-500/30 bg-gray-500/10'
+                    }`}>
+                      Può: {hoveredMove.ailment} {hoveredMove.ailmentChance ? `${hoveredMove.ailmentChance}%` : ''}
+                    </span>
+                  </div>
+                )}
+
+                {/* Priority Badge */}
+                {hoveredMove.priority && hoveredMove.priority > 0 && (
+                  <div className="mb-1.5 flex flex-wrap gap-1">
+                    <span className="text-[7px] font-bold px-1.5 py-0.5 rounded-full border text-indigo-400 border-indigo-500/30 bg-indigo-500/10">
+                      PRIORITÀ +{hoveredMove.priority}
+                    </span>
+                  </div>
+                )}
+
+                {/* Stat Changes */}
                 {hoveredMove.statChanges && hoveredMove.statChanges.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1 border-t border-indigo-500/20 pt-1.5">
-                    {hoveredMove.statChanges.map((sc, i) => (
-                      <span key={i} className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${sc.change > 0 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'}`}>
-                        {sc.stat.toUpperCase()} {sc.change > 0 ? '+' : ''}{sc.change} {sc.target === 'user' ? '(tu)' : '(nemico)'}
-                      </span>
-                    ))}
+                  <div className="flex flex-wrap gap-1 border-t border-indigo-500/20 pt-1">
+                    {hoveredMove.statChanges.map((sc, i) => {
+                      const isUserTarget = sc.target === 'user' || (!sc.target && sc.change > 0);
+                      const isBuff = sc.change > 0;
+                      return (
+                        <span key={i} className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full border ${isBuff ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'}`}>
+                          {sc.stat.toUpperCase()} {isBuff ? '+' : ''}{sc.change} {isUserTarget ? '(tu)' : '(nemico)'}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -870,8 +953,9 @@ export default function BattleEngine({ playerPokemon: initialPlayer, enemyTeam, 
               onMouseLeave={() => setHoveredMove(null)}
               onTouchStart={() => setHoveredMove(move)}
               onTouchEnd={() => setHoveredMove(null)}
+              onContextMenu={(e) => e.preventDefault()}
               disabled={!isPlayerTurn || isBattleOver || showSwitchMenu || showBagMenu || (move.currentPp !== undefined && move.currentPp <= 0)}
-              className={`p-3 rounded-xl border transition-all flex flex-col items-start gap-1 group text-[11px]
+              className={`p-3 rounded-xl border transition-all flex flex-col items-start gap-1 group text-[11px] select-none
                 ${isPlayerTurn && !isBattleOver && !showSwitchMenu && !showBagMenu && (move.currentPp === undefined || move.currentPp > 0)
                   ? 'bg-slate-800 border-white/10 hover:bg-slate-700 hover:border-white/30 active:scale-105'
                   : 'bg-slate-900 border-white/5 opacity-50 cursor-not-allowed'}`}
